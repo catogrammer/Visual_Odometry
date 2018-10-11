@@ -52,8 +52,20 @@ struct Polynom{
 			std::cout << "Length isn't right!" << '\n';
 	}
 
+	void addP(Polynom p) {
+		if(this->len < p->len){
+			std::cout << "You can't add polynom more size than size current polynom" << '\n';
+		}else{
+			for (size_t i = 0; i < this->len; i++) {
+				
+			}
+		}
+	}
+
 	void multiple(int factor) {
-		
+		for (size_t i = 0; i < len; i++) {
+			this->polynom[i] *= arg;
+		}
 	}
 
 	void printPolynom() {
@@ -80,8 +92,10 @@ struct EsssentialMatrix{
 			tmp[i].add(x[1]);
 			tmp[i].add(x[2]);
 		}
-		for (size_t i = 0; i < 3; i++) {
 
+		for (size_t i = 0; i < 3; i++) {
+			tmp[i].multiple(_x[i]);
+			result.addP(tmp[i]);
 		}
 	}
 
