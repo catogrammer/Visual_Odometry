@@ -29,9 +29,8 @@ struct Coordinate{
 		std::cout << "[" << coord[0] << coord[1] << coord[2] << "]";
 	}
 	void printCoordT() {
-		for (size_t i = 0; i < 3; i++) {
+		for (size_t i = 0; i < 3; i++)
 			std::cout << "[" << coordT[0][i] <<"]" << '\n';
-		}
 	}
 };
 
@@ -39,6 +38,7 @@ struct Polynom{
 	int *polynom;
 	size_t curr = 0;
 	size_t len = 0;
+
 	Polynom(size_t len){
 		this->len = len;
 		this->polynom = new int[len];
@@ -53,25 +53,24 @@ struct Polynom{
 	}
 
 	void addP(Polynom p) {
-		if(this->len < p->len){
+		if(this->len < p.len){
 			std::cout << "You can't add polynom more size than size current polynom" << '\n';
 		}else{
-			for (size_t i = 0; i < this->len; i++) {
-				
+			for (size_t i = 0; i < p.len; i++){
+				this->polynom[this->curr] = p.polynom[i];
+				this->curr++;
 			}
 		}
 	}
 
 	void multiple(int factor) {
-		for (size_t i = 0; i < len; i++) {
-			this->polynom[i] *= arg;
-		}
+		for (size_t i = 0; i < len; i++)
+			this->polynom[i] *= factor;
 	}
 
 	void printPolynom() {
-		for (size_t i = 0; i < len; i++) {
+		for (size_t i = 0; i < len; i++)
 			std::cout << "[ " << this->polynom[i] << " ]";
-		}
 		std::cout << '\n';
 	}
 
@@ -83,10 +82,11 @@ struct Polynom{
 
 struct EsssentialMatrix{
 	std::vector< std::pair<Coordinate, Coordinate> > features;
-	Polynom tmp[3] = { Polynom(3), Polynom(3), Polynom(3)};
-	Polynom result = Polynom(9);
+	int **EssentMtrx;
 
-	int calcEquation(int x[3], int _x[3]) {
+	Polynom calcEquation(int x[3], int _x[3]) {
+		Polynom tmp[3] = {Polynom(3), Polynom(3), Polynom(3)};
+		Polynom result = Polynom(9);
 		for (size_t i = 0; i < 3; i++) {
 			tmp[i].add(x[0]);
 			tmp[i].add(x[1]);
@@ -96,6 +96,14 @@ struct EsssentialMatrix{
 		for (size_t i = 0; i < 3; i++) {
 			tmp[i].multiple(_x[i]);
 			result.addP(tmp[i]);
+		}
+		return result;
+	}
+
+	void calcMatrix(/* arguments */) {
+		for (auto el : features) {
+			std::cout << "Errooooooor 404!" << '\n';
+			calcEquation(el.first.coord, el.second.coord).printPolynom();
 		}
 	}
 
@@ -118,9 +126,9 @@ struct EsssentialMatrix{
 			Coordinate c2 = Coordinate(x,y,z);
 			tmp2.push_back(c2);
 		}
-		for (size_t i = 0; i < 9; i++) {
+		for (size_t i = 0; i < 9; i++)
 			features.push_back(std::make_pair(tmp1[i], tmp2[i]));
-		}
+
 		fin.close();
 	}
 
@@ -162,13 +170,22 @@ int main(int argc, char const *argv[]) {
 	// C.Transposition();
 	// C.printCoord();
 	EsssentialMatrix Ess;
+	Ess.simpleRead();
+
+	Ess.calcMatrix();
+	// int a[3] = {1, 2, 3};
+	// Ess.calcEquation(a, a);
+
+
 	// Ess.readData();
-	// Ess.simpleRead();
 	// Ess.printRead();
+	// Polynom p2 = Polynom(5);
 	// Polynom p = Polynom(2);
 	// p.add(1);
 	// p.add(2);
+	// p2.addP(p);
 	// p.printPolynom();
+	// p2.printPolynom();
 
 	return 0;
 }
