@@ -74,9 +74,10 @@ struct Polynom{
 		std::cout << '\n';
 	}
 
-	~Polynom(){
-		delete[] polynom;
-	}
+	//деструкторо не нужен или нужен конструктор копирования и присваивания??
+	// ~Polynom(){
+	// 	delete[] polynom;
+	// }
 
 };
 
@@ -102,7 +103,7 @@ struct EsssentialMatrix{
 
 	void calcMatrix(/* arguments */) {
 		for (auto el : features) {
-			std::cout << "Errooooooor 404!" << '\n';
+			// std::cout << "Errooooooor 404!" << '\n';
 			calcEquation(el.first.coord, el.second.coord).printPolynom();
 		}
 	}
