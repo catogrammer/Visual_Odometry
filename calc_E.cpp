@@ -63,6 +63,10 @@ struct Polynom{
 		}
 	}
 
+	Polynom(const Polynom &p) : len(p.len), polynom(new int[p.len]) {
+		std::copy(p.polynom, p.polynom + this->len, this->polynom);
+	}
+
 	void multiple(int factor) {
 		for (size_t i = 0; i < len; i++)
 			this->polynom[i] *= factor;
@@ -74,10 +78,10 @@ struct Polynom{
 		std::cout << '\n';
 	}
 
-	//деструкторо не нужен или нужен конструктор копирования и присваивания??
-	// ~Polynom(){
-	// 	delete[] polynom;
-	// }
+	~Polynom(){
+		if(polynom != nullptr)
+			delete[] polynom;
+	}
 
 };
 
@@ -101,10 +105,11 @@ struct EsssentialMatrix{
 		return result;
 	}
 
+
 	void calcMatrix(/* arguments */) {
 		for (auto el : features) {
-			// std::cout << "Errooooooor 404!" << '\n';
-			calcEquation(el.first.coord, el.second.coord).printPolynom();
+			Polynom p = calcEquation(el.first.coord, el.second.coord);
+			p.printPolynom();
 		}
 	}
 
