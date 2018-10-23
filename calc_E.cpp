@@ -170,28 +170,9 @@ struct EsssentialMatrix{
 };
 
 int main(int argc, char const *argv[]) {
-
-	// Coordinate C = Coordinate(1, 2, 3);
-	// C.printCoord();
-	// C.Transposition();
-	// C.printCoord();
 	EsssentialMatrix Ess;
 	Ess.simpleRead();
-
 	Ess.calcMatrix();
-	// int a[3] = {1, 2, 3};
-	// Ess.calcEquation(a, a);
-
-
-	// Ess.readData();
-	// Ess.printRead();
-	// Polynom p2 = Polynom(5);
-	// Polynom p = Polynom(2);
-	// p.add(1);
-	// p.add(2);
-	// p2.addP(p);
-	// p.printPolynom();
-	// p2.printPolynom();
 
 	return 0;
 }
