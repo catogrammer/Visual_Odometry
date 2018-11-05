@@ -2,8 +2,9 @@
 #include <fstream>
 #include <vector>
 #include <utility>
-// #include <tr1>
 
+#include <eigen3/Eigen/SparseLU> //метод факторизации (LU - разложение), 
+// где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
 
 /*
 	xEx' = 0
@@ -87,7 +88,8 @@ struct Polynom{
 
 struct EsssentialMatrix{
 	std::vector< std::pair<Coordinate, Coordinate> > features;
-	int **EssentMtrx;
+	std::vector<Polynom> system_lin_equat;
+	int EssentMtrx[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
 	Polynom calcEquation(int x[3], int _x[3]) {
 		Polynom tmp[3] = {Polynom(3), Polynom(3), Polynom(3)};
@@ -106,11 +108,30 @@ struct EsssentialMatrix{
 	}
 
 
+
 	void calcMatrix(/* arguments */) {
 		for (auto el : features) {
-			Polynom p = calcEquation(el.first.coord, el.second.coord);
-			p.printPolynom();
+			system_lin_equat.push_back(calcEquation(el.first.coord, el.second.coord));
+			// p.printPolynom();
 		}
+		Eigen::VectorXd x(9), b(9);
+		SparserMatrix<double, ColMajor> A;
+		SparseLU< SparserMatrix <scalar, ColMajor>, COLAMDOrdering<Index> > solver;
+		//fill A and b
+
+		// Compute the ordering permutation vector from the structural pattern of A
+		solver.analayzePattern(A);
+		solver.factorize(A);
+		x = solver.solve(b);
+
+
+
+		for (size_t i = 0; i < 3; i++) {
+			for (size_t j = 0; j < 3; j++) {
+
+			}
+		}
+
 	}
 
 	void simpleRead() {
@@ -138,13 +159,13 @@ struct EsssentialMatrix{
 		fin.close();
 	}
 
-	void printRead() {
-		for (size_t i = 0; i < 9; i++) {
-			features[i].first.printCoord();
-			features[i].second.printCoord();
-			std::cout << '\n';
-		}
-	}
+	// void printRead() {
+	// 	for (size_t i = 0; i < 9; i++) {
+	// 		features[i].first.printCoord();
+	// 		features[i].second.printCoord();
+	// 		std::cout << '\n';
+	// 	}
+	// }
 
 	// int readData(/* arguments */) {
 	// 	/*
@@ -168,11 +189,3 @@ struct EsssentialMatrix{
 	// 	fin.close();
 	// }
 };
-
-int main(int argc, char const *argv[]) {
-	EsssentialMatrix Ess;
-	Ess.simpleRead();
-	Ess.calcMatrix();
-
-	return 0;
-}
