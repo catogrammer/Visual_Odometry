@@ -1,16 +1,23 @@
+#ifndef ESSENTMTRX_HPP
+#define ESSENTMTRX_HPP
+
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <utility>
 
-#include <eigen3/Eigen/SparseLU> //метод факторизации (LU - разложение), 
+#include <eigen3/Eigen/SparseLU> //метод факторизации (LU - разложение),
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
+#include <eigen3/Eigen/Dense>
+
+#include "Polynom.hpp"
+#include "AdapterMyMtrxToEigenMtrx.hpp"
 
 /*
 	xEx' = 0
 */
 
-struct Coordinate{
+struct Coordinate {
 	int coord[3] = {0, 0, 0};
 	int coordT[3][1] = {{0}, {0}, {0}};
 
@@ -35,63 +42,15 @@ struct Coordinate{
 	}
 };
 
-struct Polynom{
-	int *polynom;
-	size_t curr = 0;
-	size_t len = 0;
-
-	Polynom(size_t len){
-		this->len = len;
-		this->polynom = new int[len];
-	}
-
-	void add(int arg) {
-		if(len > 0 && curr < len){
-			this->polynom[curr] = arg;
-			curr++;
-		}else
-			std::cout << "Length isn't right!" << '\n';
-	}
-
-	void addP(Polynom p) {
-		if(this->len < p.len){
-			std::cout << "You can't add polynom more size than size current polynom" << '\n';
-		}else{
-			for (size_t i = 0; i < p.len; i++){
-				this->polynom[this->curr] = p.polynom[i];
-				this->curr++;
-			}
-		}
-	}
-
-	Polynom(const Polynom &p) : len(p.len), polynom(new int[p.len]) {
-		std::copy(p.polynom, p.polynom + this->len, this->polynom);
-	}
-
-	void multiple(int factor) {
-		for (size_t i = 0; i < len; i++)
-			this->polynom[i] *= factor;
-	}
-
-	void printPolynom() {
-		for (size_t i = 0; i < len; i++)
-			std::cout << "[ " << this->polynom[i] << " ]";
-		std::cout << '\n';
-	}
-
-	~Polynom(){
-		if(polynom != nullptr)
-			delete[] polynom;
-	}
-
-};
-
-struct EsssentialMatrix{
+class EsssentialMatrix {
 	std::vector< std::pair<Coordinate, Coordinate> > features;
 	std::vector<Polynom> system_lin_equat;
-	int EssentMtrx[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+	// int EssentMtrx[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+	Eigen::Matrix3d EssentMtrx = Eigen::Matrix3d::Ones();
 
-	Polynom calcEquation(int x[3], int _x[3]) {
+public:
+
+	Polynom calculateEquation(int x[3], int _x[3]) {
 		Polynom tmp[3] = {Polynom(3), Polynom(3), Polynom(3)};
 		Polynom result = Polynom(9);
 		for (size_t i = 0; i < 3; i++) {
@@ -109,29 +68,33 @@ struct EsssentialMatrix{
 
 
 
-	void calcMatrix(/* arguments */) {
+	void calculateMatrix(/* arguments */) {
 		for (auto el : features) {
-			system_lin_equat.push_back(calcEquation(el.first.coord, el.second.coord));
+			Polynom p = calculateEquation(el.first.coord, el.second.coord);
+			system_lin_equat.push_back(p);
 			// p.printPolynom();
 		}
-		Eigen::VectorXd x(9), b(9);
-		SparserMatrix<double, ColMajor> A;
-		SparseLU< SparserMatrix <scalar, ColMajor>, COLAMDOrdering<Index> > solver;
-		//fill A and b
 
-		// Compute the ordering permutation vector from the structural pattern of A
-		solver.analayzePattern(A);
-		solver.factorize(A);
-		x = solver.solve(b);
-
-
-
-		for (size_t i = 0; i < 3; i++) {
-			for (size_t j = 0; j < 3; j++) {
-
+		AdapterMyMtrxToEigenMtrx calcMatrix(system_lin_equat); /* make static function,
+		 that don't create exemplar of class ???! */
+		// calcMatrix = AdapterMyMtrxToEigenMtrx::getEigenMtrx(system_lin_equat);
+		Eigen::MatrixXd A = calcMatrix.getEigenMtrx();
+		std::cout << A << std::endl;
+		Eigen::VectorXd b = Eigen::VectorXd::Zero(9);
+	
+		// std::cout << "Here is the matrix A:\n" << A << std::endl;
+		// std::cout << "Here is the vector b:\n" << b << std::endl;
+		Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
+		// std::cout << "The solution is:\n" << x << std::endl;
+		
+		for(size_t i = 0; i < 3; i++) {
+			for(size_t j = 0; j < 3; j++) {
+				EssentMtrx(i, j) = x(i+j);
 			}
+			
 		}
-
+		std::cout << "The solution is:\n" << EssentMtrx << std::endl;
+		
 	}
 
 	void simpleRead() {
@@ -189,3 +152,5 @@ struct EsssentialMatrix{
 	// 	fin.close();
 	// }
 };
+
+#endif //EssentMtrx
