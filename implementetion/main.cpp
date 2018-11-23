@@ -7,6 +7,7 @@ int main(int argc, char const *argv[]) {
 
 	EsssentialMatrix Ess;
 	Ess.simpleRead();
+	// Ess.printRead();
 	Ess.calculateMatrix();
 	
 

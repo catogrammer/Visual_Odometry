@@ -2,20 +2,20 @@
 #define POLYNOM_HPP
 
 class Polynom {
-	int *polynom;
+	double *polynom;
 	size_t curr = 0;
 	size_t len = 0;
     
 public:
 	Polynom(size_t len){
 		this->len = len;
-		this->polynom = new int[len];
+		this->polynom = new double[len];
 	}
 
-	int       *get_polynom()       {return polynom; }
-    const int *get_polynom() const {return polynom; }
+	double       *get_polynom()       {return polynom; }
+    const double *get_polynom() const {return polynom; }
 
-	void add(int arg) {
+	void add(double arg) {
 		if(len > 0 && curr < len){
 			this->polynom[curr] = arg;
 			curr++;
@@ -34,11 +34,11 @@ public:
 		}
 	}
 
-	Polynom(const Polynom &p) : len(p.len), polynom(new int[p.len]) {
+	Polynom(const Polynom &p) : len(p.len), polynom(new double[p.len]) {
 		std::copy(p.polynom, p.polynom + this->len, this->polynom);
 	}
 
-	void multiple(int factor) {
+	void multiple(double factor) {
 		for (size_t i = 0; i < len; i++)
 			this->polynom[i] *= factor;
 	}

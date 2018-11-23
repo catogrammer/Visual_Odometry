@@ -18,10 +18,10 @@
 */
 
 struct Coordinate {
-	int coord[3] = {0, 0, 0};
-	int coordT[3][1] = {{0}, {0}, {0}};
+	double coord[3] = {0, 0, 0};
+	double coordT[3][1] = {{0}, {0}, {0}};
 
-	Coordinate(int x, int y, int z){
+	Coordinate(double x, double y, double z){
 		coord[0] = x;
 		coord[1] = y;
 		coord[2] = z;
@@ -34,11 +34,10 @@ struct Coordinate {
 	}
 
 	void printCoord() {
-		std::cout << "[" << coord[0] << coord[1] << coord[2] << "]";
+		std::cout << "[" << coord[0] << ' ' << coord[1] << ' ' << coord[2] << "]";
 	}
 	void printCoordT() {
-		for (size_t i = 0; i < 3; i++)
-			std::cout << "[" << coordT[0][i] <<"]" << '\n';
+			std::cout << "[" << coordT[0][0] << ' ' << coordT[0][1] << ' ' << coordT[0][2] <<"]" << '\n';
 	}
 };
 
@@ -50,15 +49,14 @@ class EsssentialMatrix {
 
 public:
 
-	Polynom calculateEquation(int x[3], int _x[3]) {
+	Polynom calculateEquation(double x[3], double _x[3]) {
 		Polynom tmp[3] = {Polynom(3), Polynom(3), Polynom(3)};
 		Polynom result = Polynom(9);
 		for (size_t i = 0; i < 3; i++) {
 			tmp[i].add(x[0]);
 			tmp[i].add(x[1]);
-			tmp[i].add(x[2]);
+			tmp[i].add(x[2]);			
 		}
-
 		for (size_t i = 0; i < 3; i++) {
 			tmp[i].multiple(_x[i]);
 			result.addP(tmp[i]);
@@ -66,13 +64,10 @@ public:
 		return result;
 	}
 
-
-
 	void calculateMatrix(/* arguments */) {
 		for (auto el : features) {
 			Polynom p = calculateEquation(el.first.coord, el.second.coord);
 			system_lin_equat.push_back(p);
-			// p.printPolynom();
 		}
 
 		AdapterMyMtrxToEigenMtrx calcMatrix(system_lin_equat); /* make static function,
@@ -80,41 +75,43 @@ public:
 		// calcMatrix = AdapterMyMtrxToEigenMtrx::getEigenMtrx(system_lin_equat);
 		Eigen::MatrixXd A = calcMatrix.getEigenMtrx();
 		std::cout << A << std::endl;
-		Eigen::VectorXd b = Eigen::VectorXd::Zero(9);
+		Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
 	
-		// std::cout << "Here is the matrix A:\n" << A << std::endl;
-		// std::cout << "Here is the vector b:\n" << b << std::endl;
-		Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
-		// std::cout << "The solution is:\n" << x << std::endl;
-		
-		for(size_t i = 0; i < 3; i++) {
-			for(size_t j = 0; j < 3; j++) {
-				EssentMtrx(i, j) = x(i+j);
+		Eigen::MatrixXd x = lu_decomp.kernel();
+		std::cout << "plurality of vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
+		std::cout << "I choose vector from first column" << std::endl;
+		std::cout << "Col is:\n" << x.col(0).transpose() << std::endl;	
+		for(size_t i = 0, k = 0; i < 3; i++) {
+			for(size_t j = 0; j < 3; j++, k++) {
+				EssentMtrx(i, j) = x.col(0)(k);
 			}
-			
 		}
 		std::cout << "The solution is:\n" << EssentMtrx << std::endl;
-		
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+		std::cout << "Its singular values are:" << std::endl << svd.singularValues() << std::endl;
+		std::cout << "Its left singular vectors are the columns of the thin U matrix:" << std::endl << svd.matrixU() << std::endl;
+		std::cout << "Its right singular vectors are the columns of the thin V matrix:" << std::endl << svd.matrixV() << std::endl;
 	}
 
 	void simpleRead() {
 		std::ifstream fin("smpldata.txt");
 		std::vector<Coordinate> tmp1;
 		std::vector<Coordinate> tmp2;
-		int x, y, z;
+		double x, y, z;
 		for (size_t i = 0; i < 9; i++) {
 			fin >> x;
 			fin >> y;
 			fin >> z;
-			Coordinate c1 = Coordinate(x,y,z);
-			tmp1.push_back(c1);
+			// Coordinate c1 = Coordinate(x,y,z);
+			tmp1.push_back( Coordinate(x,y,z) );
 		}
 		for (size_t i = 0; i < 9; i++) {
 			fin >> x;
 			fin >> y;
 			fin >> z;
-			Coordinate c2 = Coordinate(x,y,z);
-			tmp2.push_back(c2);
+			// Coordinate c2 = Coordinate(x,y,z);
+			tmp2.push_back( Coordinate(x,y,z) );
 		}
 		for (size_t i = 0; i < 9; i++)
 			features.push_back(std::make_pair(tmp1[i], tmp2[i]));
@@ -122,13 +119,14 @@ public:
 		fin.close();
 	}
 
-	// void printRead() {
-	// 	for (size_t i = 0; i < 9; i++) {
-	// 		features[i].first.printCoord();
-	// 		features[i].second.printCoord();
-	// 		std::cout << '\n';
-	// 	}
-	// }
+	void printRead() {
+		for (size_t i = 0; i < 9; i++) {
+			features[i].first.printCoord();
+			std::cout << '\t';
+			features[i].second.printCoord();
+			std::cout << '\n';
+		}
+	}
 
 	// int readData(/* arguments */) {
 	// 	/*
