@@ -3,17 +3,21 @@
 
 class Polynom {
 	double *polynom;
-	size_t curr = 0;
 	size_t len = 0;
-    
+	size_t curr = 0;
+
 public:
 	Polynom(size_t len){
 		this->len = len;
 		this->polynom = new double[len];
 	}
 
+	Polynom(const Polynom &p) : polynom(new double[p.len]), len(p.len) {
+		std::copy(p.polynom, p.polynom + this->len, this->polynom);
+	}
+
 	double       *get_polynom()       {return polynom; }
-    const double *get_polynom() const {return polynom; }
+  const double *get_polynom() const {return polynom; }
 
 	void add(double arg) {
 		if(len > 0 && curr < len){
@@ -32,10 +36,6 @@ public:
 				this->curr++;
 			}
 		}
-	}
-
-	Polynom(const Polynom &p) : len(p.len), polynom(new double[p.len]) {
-		std::copy(p.polynom, p.polynom + this->len, this->polynom);
 	}
 
 	void multiple(double factor) {

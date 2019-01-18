@@ -10,7 +10,7 @@ class AdapterMyMtrxToEigenMtrx {
     Eigen::MatrixXd A;
 
 public:
-    AdapterMyMtrxToEigenMtrx(std::vector<Polynom> vec_of_p, int row = 9, int column = 9){
+    AdapterMyMtrxToEigenMtrx(std::vector<Polynom> vec_of_p, size_t row = 9, size_t column = 9){
             A = Eigen::MatrixXd(row, column);
             for(size_t i = 0; i < row; i++) {
                 for(size_t j = 0; j < column; j++){

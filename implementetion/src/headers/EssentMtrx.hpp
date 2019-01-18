@@ -11,7 +11,7 @@
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
 #include <eigen3/Eigen/Dense>
 
-#include "Polynom.hpp"
+// #include "Polynom.hpp" //included in adapter
 #include "AdapterMyMtrxToEigenMtrx.hpp"
 
 /*
@@ -91,8 +91,10 @@ public:
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
 
 		std::cout << "Its singular values are:" << std::endl << svd.singularValues() << std::endl;
-		std::cout << "Its left singular vectors are the columns of the thin U matrix:" << std::endl << svd.matrixU() << std::endl;
-		std::cout << "Its right singular vectors are the columns of the thin V matrix:" << std::endl << svd.matrixV() << std::endl;
+		std::cout << "Its left singular vectors are the columns of the thin U matrix:" <<
+		std::endl << svd.matrixU() << std::endl;
+		std::cout << "Its right singular vectors are the columns of the thin V matrix:" <<
+		std::endl << svd.matrixV() << std::endl;
 	}
 
 	void simpleRead(std::string path) {

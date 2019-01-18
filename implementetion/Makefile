@@ -13,10 +13,12 @@ SRC = main.cpp
 OBJ = $(SRC:.cpp = .o)
 
 # сделать отделбную папку для объектников или их тоже в build, тогкда как?
+# откуда круговая зависимость?
 
 all : $(TARGET)
 
 $(TARGET) : main.o
+	mkdir $(PATH_BUILD)
 	$(CC) -o $(PATH_BUILD)$(TARGET) main.o
 
 main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
@@ -26,4 +28,4 @@ main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
 	$(CC) $< $@ $(CXXFLAGS)
 
 clean :
-	rm -f  $(PATH_BUILD)$(TARGET) *.o *.gch
+	rm -rf  $(PATH_BUILD) *.o *.gch
