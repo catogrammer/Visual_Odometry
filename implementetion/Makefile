@@ -1,16 +1,16 @@
 # compilator use
-CC = g++
+CC =g++
 # flags for compile
-CFLAGS = -c -Wall
+CFLAGS =-c -Wall
 # standart use
-CXXFLAGS = -std=c++14
+CXXFLAGS =-std=c++14
 
-PATH_HPP = ./src/headers/
-PATH_BUILD = ./build/
+PATH_HPP =./src/headers/
+PATH_BUILD =./build/
 
-TARGET = essent_matrix
-SRC = main.cpp
-OBJ = $(SRC:.cpp = .o)
+TARGET =essent_matrix
+SRC =main.cpp
+OBJ =$(SRC:.cpp = .o)
 
 # сделать отделбную папку для объектников или их тоже в build, тогкда как?
 # откуда круговая зависимость?
@@ -23,9 +23,6 @@ $(TARGET) : main.o
 
 main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
 	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
-
-%.hpp : %.hpp
-	$(CC) $< $@ $(CXXFLAGS)
 
 clean :
 	rm -rf  $(PATH_BUILD) *.o *.gch
