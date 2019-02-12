@@ -13,20 +13,18 @@ struct Camera {
     Eigen::Vector3d normal; // cameras direction //view direction in global coord
     Eigen::Vector3d horizon; // right vector or x' in global coord
     Eigen::Vector3d vertical; // left vector or y' in global coord
-    // Eigen::Vector3d features[9]; // как проаерить что все удаляется
     Eigen::MatrixXd features; // in local coordinate
 };
 
 void write_to_file(Eigen::MatrixXd features, std::string path) {
-    std::ofstream fout(path, std::ofstream::out);
+    std::ofstream fout(path, std::ofstream::app);
     if(!fout.is_open()){
         std::cout << "data doesn't read" << '\n';
     }
-    
-
     for (size_t i = 0; i < 9; i++) {
-        fout << features(0, i) << ' ' << features(1, i) << ' ' << features(1, i) << '\n';
+        fout << features(0, i) << ' ' << features(1, i) << ' ' << features(2, i) << '\n';
     }
+    fout << '\n';
 
     fout.close();
 }
@@ -49,7 +47,7 @@ int main(int argc, char const *argv[]) {
     std::srand(std::time(0)); //std::rand() % left_range - right_range
 
     for (size_t i = 0; i < 9; i++) {
-        camera_1.features.col(i) << std::rand() % (-5) - 10, std::rand() % (-5) - 10, 3;
+        camera_1.features.col(i) << (std::rand() % (-5) - 10), (std::rand() % (-5) - 10),  3;
     }
 
     std::cout << "*****************features - 1***********************" << '\n';
@@ -82,8 +80,9 @@ int main(int argc, char const *argv[]) {
     std::cout << camera_2.features << '\n';
     std::cout << "****************************************************" << '\n';
 
-    // std::string path = "./implementetion/src/input_data/test_file.txt";
-    std::string path = "./implementetion/test__.txt";
+    std::string path = "./src/input_data/smpldata.txt";
+    std::ofstream fout(path, std::ofstream::out);
+    fout.close();
     write_to_file(camera_1.features, path);
     write_to_file(camera_2.features, path);
 

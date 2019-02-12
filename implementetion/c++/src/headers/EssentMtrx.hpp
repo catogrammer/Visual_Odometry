@@ -87,6 +87,11 @@ public:
 				EssentMtrx(i, j) = x.col(0)(k);
 			}
 		}
+
+		std::cout << "**********************" << '\n';
+		std::cout << A*x.col(0) << '\n';
+		std::cout << "**********************" << '\n';
+
 		std::cout << "The solution is:\n" << EssentMtrx << std::endl;
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
 

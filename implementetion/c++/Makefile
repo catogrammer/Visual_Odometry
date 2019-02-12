@@ -12,8 +12,7 @@ TARGET =essent_matrix
 SRC =main.cpp
 OBJ =$(SRC:.cpp = .o)
 
-# сделать отделбную папку для объектников или их тоже в build, тогкда как?
-# откуда круговая зависимость?
+# сделать отдельную папку для объектников или их тоже в build, тогкда как?
 
 all : $(TARGET)
 
@@ -25,4 +24,4 @@ main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
 	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
 
 clean :
-	rm -rf  $(PATH_BUILD) *.o *.gch
+	rm -rf  $(PATH_BUILD) *.o
