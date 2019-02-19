@@ -23,5 +23,8 @@ $(TARGET) : main.o
 main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
 	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
 
+transform :
+	$(CC) Transformation_Matrix.cpp $(CXXFLAGS) -o transform_coord
+
 clean :
 	rm -rf  $(PATH_BUILD) *.o

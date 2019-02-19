@@ -65,6 +65,42 @@ public:
 		return result;
 	}
 
+	void calc_UV_S__R_t_x() {
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		// std::cout << "singular values are:" << std::endl << svd.singularValues() << std::endl;
+		// std::cout << "U matrix:" << svd.matrixU() << std::endl;
+		// std::cout << "V matrix:" << std::endl << svd.matrixV() << std::endl;
+		/*
+			[t]_x = U * W * S * U^T   S - singular values
+			R = U * W^-1 * V^T
+			diag(S) = [s, s, 0]
+			W^-1 = W^T=[[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
+		*/
+
+		Eigen::Matrix3d W_T, W, R, S, t_x;
+		W_T << 0, -1, 0,
+			   1,  0, 0,
+			   0,  0, 1;
+		W <<  0,  1, 0,
+			 -1,  0, 0,
+			  0,  0, 1;
+		S << svd.singularValues()[0], 0, 0,
+			 0, svd.singularValues()[1], 0,
+			 0, 					  0, 0;
+		// std::cout << "Matrix W is transpose : \n" << W_T.transpose() << '\n';
+		R = svd.matrixU() * W_T * svd.matrixV().transpose();
+		std::cout << "Rotation matrix : \n" << R << '\n';
+		t_x = svd.matrixU() * W * S * svd.matrixU().transpose();
+		std::cout << "Matrix t_x : \n" << t_x << '\n';
+
+		/*
+			t_k = [[0, -t_z, t_y], [t_z, 0, -t_x], [-t_y, t_x, 0]]
+		*/
+
+		std::cout << "Vector t_x : \n" << t_x(2,1) << ' '
+		 		  << t_x(2,0) << ' ' << t_x(1,0) << '\n';
+	}
+
 	void calculateMatrix(/* arguments */) {
 		for (auto el : features) {
 			Polynom p = calculateEquation(el.first.coord, el.second.coord);
@@ -80,26 +116,20 @@ public:
 
 		Eigen::MatrixXd x = lu_decomp.kernel();
 		std::cout << "plurality of vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
-		std::cout << "I choose vector from first column" << std::endl;
-		std::cout << "Col is:\n" << x.col(0).transpose() << std::endl;
-		for(size_t i = 0, k = 0; i < 3; i++) {
-			for(size_t j = 0; j < 3; j++, k++) {
-				EssentMtrx(i, j) = x.col(0)(k);
+
+		for (size_t col_ker = 0; col_ker < x.cols(); col_ker++) {
+			std::cout << "*******-" << col_ker << "-*****************" << '\n';
+			for(size_t i = 0, k = 0; i < 3; i++) {
+				for(size_t j = 0; j < 3; j++, k++) {
+					EssentMtrx(i, j) = x.col(col_ker)(k);
+				}
 			}
+			std::cout << "The solution is:\n" << EssentMtrx << std::endl;
+			calc_UV_S__R_t_x();
+			
+			// std::cout << A*x.col(0) << '\n'
 		}
 
-		std::cout << "**********************" << '\n';
-		std::cout << A*x.col(0) << '\n';
-		std::cout << "**********************" << '\n';
-
-		std::cout << "The solution is:\n" << EssentMtrx << std::endl;
-		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-		std::cout << "Its singular values are:" << std::endl << svd.singularValues() << std::endl;
-		std::cout << "Its left singular vectors are the columns of the thin U matrix:" <<
-		std::endl << svd.matrixU() << std::endl;
-		std::cout << "Its right singular vectors are the columns of the thin V matrix:" <<
-		std::endl << svd.matrixV() << std::endl;
 	}
 
 	void simpleRead(std::string path) {
