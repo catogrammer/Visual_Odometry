@@ -67,9 +67,9 @@ public:
 
 	void calc_UV_S__R_t_x() {
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
-		// std::cout << "singular values are:" << std::endl << svd.singularValues() << std::endl;
-		// std::cout << "U matrix:" << svd.matrixU() << std::endl;
-		// std::cout << "V matrix:" << std::endl << svd.matrixV() << std::endl;
+		std::cout << "singular values are:" << std::endl << svd.singularValues() << std::endl;
+		std::cout << "U matrix: \n" << svd.matrixU() << std::endl;
+		std::cout << "V matrix:" << std::endl << svd.matrixV() << std::endl;
 		/*
 			[t]_x = U * W * S * U^T   S - singular values
 			R = U * W^-1 * V^T
@@ -126,7 +126,7 @@ public:
 			}
 			std::cout << "The solution is:\n" << EssentMtrx << std::endl;
 			calc_UV_S__R_t_x();
-			
+
 			// std::cout << A*x.col(0) << '\n'
 		}
 
