@@ -20,7 +20,7 @@ void write_to_file(Eigen::MatrixXd features, std::string path) {
     if(!fout.is_open()){
         std::cout << "data doesn't read" << '\n';
     }
-    for (size_t i = 0; i < 9; i++) {
+    for (size_t i = 0; i < features.cols(); i++) {
         fout << features(0, i) << ' ' << features(1, i) << ' ' << features(2, i) << '\n';
     }
     fout << '\n';
@@ -61,8 +61,8 @@ int main(int argc, char const *argv[]) {
     camera_2.normal    = camera_2.normal.normalized(); //loc in cam pose coord
     camera_2.horizon   = camera_2.horizon.normalized(); //loc in cam pose coord
     //
-    camera_1.features = Eigen::MatrixXd(3,9); //(row,column)
-    camera_2.features = Eigen::MatrixXd(3,9);
+    camera_1.features = Eigen::MatrixXd(3,11); //(row,column)
+    camera_2.features = Eigen::MatrixXd(3,11);
 
     //********************
     std::srand(std::time(0)); //std::rand() % left_range - right_range
@@ -83,6 +83,8 @@ int main(int argc, char const *argv[]) {
     camera_1.features.col(6) << -2, 2, 3,
     camera_1.features.col(7) << 0, 1, 3,
     camera_1.features.col(8) << 0, 2, 3;
+    camera_1.features.col(9) << 2, 3, 3;
+    camera_1.features.col(10) << 3, 2, 3;
 
     std::cout << "*****************features - 1***********************" << '\n';
     std::cout << camera_1.features << '\n';
@@ -99,14 +101,14 @@ int main(int argc, char const *argv[]) {
     transf_m_2 << camera_2.horizon, camera_2.vertical, camera_2.normal;
 
     //transform X_local_1 to X_glob : X_glob = M_1*X_loc + C_1
-    Eigen::MatrixXd features_in_glob(3,9);
+    Eigen::MatrixXd features_in_glob(3,camera_1.features.cols());
     for (size_t i = 0; i < features_in_glob.cols(); i++) {
         features_in_glob.col(i) << (transf_m_1 * camera_1.features.col(i) + camera_1.cam_pose);
     }
     std::cout << "Global features : \n" << features_in_glob << '\n';
 
     //transform X_glob to X_local_2 : X_local_2 = M_2^(-1)(X_glob - C_2)
-    for (size_t i = 0; i < 9; i++) {
+    for (size_t i = 0; i < camera_1.features.cols(); i++) {
         camera_2.features.col(i) << transf_m_2.inverse() * (features_in_glob.col(i) - camera_2.cam_pose);
     }
 
@@ -114,9 +116,14 @@ int main(int argc, char const *argv[]) {
     std::cout << camera_2.features << '\n';
     std::cout << "****************************************************" << '\n';
 
-    std::string path = "./src/input_data/smpldata.txt";
+    std::string path = "../input_data/smpldata.txt";
     std::ofstream fout(path, std::ofstream::out);
+    fout << camera_1.features.cols() << '\n';
     fout.close();
+
+    // std::ofstream fout_(path, std::ofstream::app);
+    // fout_ << camera_1.features.cols();
+    // fout_.close();
     write_to_file(camera_1.features, path);
     write_to_file(camera_2.features, path);
 

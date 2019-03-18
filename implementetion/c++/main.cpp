@@ -4,7 +4,7 @@
 
 
 int main(int argc, char const *argv[]) {
-	std::string path = "./src/input_data/smpldata.txt";
+	std::string path = "../input_data/smpldata.txt";
 	EsssentialMatrix Ess;
 	Ess.simpleRead(path);
 	// Ess.printRead();

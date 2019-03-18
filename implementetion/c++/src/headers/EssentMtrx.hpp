@@ -45,7 +45,6 @@ struct Coordinate {
 class EsssentialMatrix {
 	std::vector< std::pair<Coordinate, Coordinate> > features;
 	std::vector<Polynom> system_lin_equat;
-	// int EssentMtrx[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 	Eigen::Matrix3d EssentMtrx = Eigen::Matrix3d::Ones();
 
 public:
@@ -107,15 +106,13 @@ public:
 			system_lin_equat.push_back(p);
 		}
 
-		AdapterMyMtrxToEigenMtrx calcMatrix(system_lin_equat); /* make static function,
-		 that don't create exemplar of class ???! */
-		// calcMatrix = AdapterMyMtrxToEigenMtrx::getEigenMtrx(system_lin_equat);
+		AdapterMyMtrxToEigenMtrx calcMatrix(system_lin_equat);
 		Eigen::MatrixXd A = calcMatrix.getEigenMtrx();
 		std::cout << A << std::endl;
 		Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
 
 		Eigen::MatrixXd x = lu_decomp.kernel();
-		std::cout << "plurality of vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
+		std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
 
 		for (size_t col_ker = 0; col_ker < x.cols(); col_ker++) {
 			std::cout << "*******-" << col_ker << "-*****************" << '\n';
@@ -140,56 +137,37 @@ public:
 		std::vector<Coordinate> tmp1;
 		std::vector<Coordinate> tmp2;
 		double x, y, z;
-		for (size_t i = 0; i < 9; i++) {
+		int size = 0;
+		fin >> size;
+		for (size_t i = 0; i < size; i++) {
 			fin >> x;
 			fin >> y;
 			fin >> z;
 			// Coordinate c1 = Coordinate(x,y,z);
 			tmp1.push_back( Coordinate(x,y,z) );
 		}
-		for (size_t i = 0; i < 9; i++) {
+		for (size_t i = 0; i < size; i++) {
 			fin >> x;
 			fin >> y;
 			fin >> z;
 			// Coordinate c2 = Coordinate(x,y,z);
 			tmp2.push_back( Coordinate(x,y,z) );
 		}
-		for (size_t i = 0; i < 9; i++)
+		for (size_t i = 0; i < size; i++)
 			features.push_back(std::make_pair(tmp1[i], tmp2[i]));
 
+		printRead();
 		fin.close();
 	}
 
 	void printRead() {
-		for (size_t i = 0; i < 9; i++) {
+		for (size_t i = 0; i < features.size(); i++) {
 			features[i].first.printCoord();
 			std::cout << '\t';
 			features[i].second.printCoord();
 			std::cout << '\n';
 		}
 	}
-
-	// int readData(/* arguments */) {
-	// 	/*
-	// 		image_1
-	// 		cn: x y z
-	// 		image_2
-	// 		cn: x y z
-	// 	*/
-	// 	char buff[50];
-	// 	auto m = cmatch {};
-	// 	std::ifstream fin("data.txt");
-	// 	fin.getline(buff, 50);
-	//
-	// 	if (reg_match("image_1", m, regex{ R"(\w+)"} )) {
-	// 		std::cout << "Ohhh eahh" << '\n';
-	// 	} else if (reg_match("image_2", m, regex{ R"(\w+)"} )) {
-	// 		std::cout << "Fuck" << '\n';
-	// 	}else{
-	// 		std::cout << "Error input data" << '\n';
-	// 	}
-	// 	fin.close();
-	// }
 };
 
 #endif //EssentMtrx
