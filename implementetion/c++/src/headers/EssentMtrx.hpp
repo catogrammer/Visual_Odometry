@@ -11,9 +11,6 @@
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
 #include <eigen3/Eigen/Dense>
 
-// #include "Polynom.hpp" //included in adapter
-#include "AdapterMyMtrxToEigenMtrx.hpp"
-
 /*
 	xEx' = 0
 */
@@ -44,24 +41,20 @@ struct Coordinate {
 
 class EsssentialMatrix {
 	std::vector< std::pair<Coordinate, Coordinate> > features;
-	std::vector<Polynom> system_lin_equat;
+	std::vector<double*> system_lin_equat;
 	Eigen::Matrix3d EssentMtrx = Eigen::Matrix3d::Ones();
 
 public:
 
-	Polynom calculateEquation(double x[3], double _x[3]) {
-		Polynom tmp[3] = {Polynom(3), Polynom(3), Polynom(3)};
-		Polynom result = Polynom(9);
+	double* calc_polynom(double x[3], double _x[3]) {
+		int count = 0;
+		double *equation = new double[9];
 		for (size_t i = 0; i < 3; i++) {
-			tmp[i].add(x[0]);
-			tmp[i].add(x[1]);
-			tmp[i].add(x[2]);
+			for (size_t j = 0; j < 3; j++) {
+				equation[count++] = x[j]*_x[i];
+			}
 		}
-		for (size_t i = 0; i < 3; i++) {
-			tmp[i].multiple(_x[i]);
-			result.addP(tmp[i]);
-		}
-		return result;
+		return equation;
 	}
 
 	void calc_UV_S__R_t_x() {
@@ -101,14 +94,19 @@ public:
 	}
 
 	void calculateMatrix(/* arguments */) {
+		std::cout << "features size : " << features.size() << '\n';
 		for (auto el : features) {
-			Polynom p = calculateEquation(el.first.coord, el.second.coord);
+			double *p = calc_polynom(el.first.coord, el.second.coord);
 			system_lin_equat.push_back(p);
 		}
-
-		AdapterMyMtrxToEigenMtrx calcMatrix(system_lin_equat);
-		Eigen::MatrixXd A = calcMatrix.getEigenMtrx();
-		std::cout << A << std::endl;
+		size_t size_m = features.size();
+		Eigen::MatrixXd A(size_m, 9);
+		for (size_t i = 0; i < size_m; i++) {
+			for (size_t j = 0; j < 9; j++) {
+				A(i,j) = system_lin_equat[i][j];
+			}
+		}
+		std::cout << "Matrix A : \n" << A << '\n';
 		Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
 
 		Eigen::MatrixXd x = lu_decomp.kernel();

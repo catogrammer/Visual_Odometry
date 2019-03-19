@@ -2,21 +2,27 @@
 
 import numpy as np
 import json
-import scipy
 from scipy.linalg import null_space
+# from scipy.linalg import null_space
 
-txt_data = 'smpldata.txt'
+txt_data = '../input_data/smpldata.txt'
 json_data = 'data_coord.json'
 
-#read data
-f = open(json_data, 'r')
-data = f.read()
-f.close()
 
-# parse data
-coords = json.loads(data)
-features_1 = coords['x1']
-features_2 = coords['x2']
+file1 = open(txt_data,"r")
+data = file1.read()
+file1.close()
+numb_f = int(data.split('\n')[0])
+arr = data.split('\n')[1::]
+my_array2 = np.genfromtxt(arr, delimiter=" ")
+
+features_1 = my_array2[0:numb_f,:]
+features_2 = my_array2[numb_f:2*numb_f,:]
+
+print(features_1)
+print(features_2)
+
+
 arr_x1 = np.array(features_1)
 arr_x2 = np.array(features_2)
 
@@ -28,7 +34,7 @@ def calc_polynom(coord_1, coord_2) :
             polynom[count] = el_x1*el_x2
             count += 1
     return polynom
-
+print('numb of points : ', len(arr_x1))
 linear_sys = np.array([])
 for i in range(len(arr_x1)):
     if i == 0 :
@@ -36,44 +42,31 @@ for i in range(len(arr_x1)):
     else :
         linear_sys = np.vstack((linear_sys, calc_polynom(arr_x1[i], arr_x2[i])))
 
-print(linear_sys)
+print('Linear sys : \n',linear_sys)
 rank = np.linalg.matrix_rank(linear_sys)
-print(rank)
+print('rank :', rank)
+
+ker = null_space(linear_sys)
+print('kernel : \n', ker)
+
+EssentMtrx = np.array([ker[0:3,0], ker[3:6,0], ker[6:9,0]])
+print('EssentMtrx : \n', EssentMtrx)
+
+print('Calc u, v : ')
+u, s, vh = np.linalg.svd(EssentMtrx, full_matrices=True)
+
+print('u : \n', u)
+print('s : \n', s)
+print('vh : \n', vh)
+w = np.array([[0,1,0],[-1,0,0],[0,0,1]])
+R = np.dot(np.dot(u,w.T), vh)
+t_x = np.dot(np.dot(np.dot(u,w),np.diag(s)), u.T)
+print('Rotation : \n', R)
+print('shift : \n', t_x)
 
 
-ker_of_sys = null_space(linear_sys)
-print(ker_of_sys)
-
-#
 # U, s, V = np.linalg.svd(linear_sys,full_matrices=False)
 # print("U : ", U)
 # print("s : ", s)
 # print("V : ", V)
 # svd = linalg.svd(a[, full_matrices, compute_uv])
-
-
-
-
-
-
-# Your data in the text file
-# Value1  Value2  Value3
-# 0.4839  0.4536  0.3561
-# 0.1292  0.6875  MISSING
-# 0.1781  0.3049  0.8928
-# MISSING 0.5801  0.2038
-# 0.5993  0.4357  0.7410
-
-# my_array2 = np.genfromtxt('data2.txt', skip_header=1, filling_values=-999)
-
-# parsing from txt
-
-# data = data.replace('\n', ' ')
-# data = data.split(' ')
-# print(data, end='')
-# data = ' '.join(data).split(' ') # Самое быстрое решение для удаления ''
-# и пустых строк с пробелом ' ' остается
-# print(len(data))
-# for i, el in enumerate(features_1):
-#     print(el, end='')
-#     data[i] = float(el)

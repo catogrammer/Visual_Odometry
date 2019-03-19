@@ -9,6 +9,7 @@ int main(int argc, char const *argv[]) {
 	Ess.simpleRead(path);
 	// Ess.printRead();
 	Ess.calculateMatrix();
+	
 	// double a = 1.5;
 	// double b = a;
 	// while (a-1) {
