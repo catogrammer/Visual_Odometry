@@ -53,7 +53,7 @@ int main(int argc, char const *argv[]) {
     Camera camera_1;
     Camera camera_2;
 
-    read_data_def_cam(camera_1, camera_2, "./def_cam_data.txt");
+    read_data_def_cam(camera_1, camera_2, "../input_data/def_cam_data.txt");
 
     // normalisation of coordinates
     camera_1.normal    = camera_1.normal.normalized(); // y
@@ -61,8 +61,9 @@ int main(int argc, char const *argv[]) {
     camera_2.normal    = camera_2.normal.normalized(); //loc in cam pose coord
     camera_2.horizon   = camera_2.horizon.normalized(); //loc in cam pose coord
     //
-    camera_1.features = Eigen::MatrixXd(3,11); //(row,column)
-    camera_2.features = Eigen::MatrixXd(3,11);
+    size_t count_features = 9;
+    camera_1.features = Eigen::MatrixXd(3,count_features); //(row,column)
+    camera_2.features = Eigen::MatrixXd(3,count_features);
 
     //********************
     std::srand(std::time(0)); //std::rand() % left_range - right_range
@@ -83,8 +84,8 @@ int main(int argc, char const *argv[]) {
     camera_1.features.col(6) << -2, 2, 3,
     camera_1.features.col(7) << 0, 1, 3,
     camera_1.features.col(8) << 0, 2, 3;
-    camera_1.features.col(9) << 2, 3, 3;
-    camera_1.features.col(10) << 3, 2, 3;
+    // camera_1.features.col(9) << 2, 3, 3;
+    // camera_1.features.col(10) << 3, 2, 3;
 
     std::cout << "*****************features - 1***********************" << '\n';
     std::cout << camera_1.features << '\n';

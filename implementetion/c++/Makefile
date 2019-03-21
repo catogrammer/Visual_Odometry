@@ -17,14 +17,17 @@ OBJ =$(SRC:.cpp = .o)
 all : $(TARGET)
 
 $(TARGET) : main.o
-	mkdir $(PATH_BUILD)
+	if [ ! -d $(PATH_BUILD) ]; then mkdir $(PATH_BUILD); fi
 	$(CC) -o $(PATH_BUILD)$(TARGET) main.o
 
-main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp $(PATH_HPP)Polynom.hpp
+main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp
 	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
 
-transform :
-	$(CC) Transformation_Matrix.cpp $(CXXFLAGS) -o transform_coord
+transform : Transformation_Matrix.cpp
+	$(CC) Transformation_Matrix.cpp $(CXXFLAGS) -o $(PATH_BUILD)transform_coord
+
+check_equat_xEx : check_equation_xEx.cpp
+	$(CC) check_equation_xEx.cpp $(CXXFLAGS) -o $(PATH_BUILD)chec_xEx
 
 clean :
 	rm -rf  $(PATH_BUILD) *.o

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <ostream>
 #include <vector>
 #include <utility>
 #include <string>
@@ -112,6 +113,12 @@ public:
 		Eigen::MatrixXd x = lu_decomp.kernel();
 		std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
 
+		std::string path= "../input_data/essential_matrix.txt";
+		std::ofstream fout(path);
+		if(!fout){
+			std::cout << "file dosen't open" << '\n';
+		}
+
 		for (size_t col_ker = 0; col_ker < x.cols(); col_ker++) {
 			std::cout << "*******-" << col_ker << "-*****************" << '\n';
 			for(size_t i = 0, k = 0; i < 3; i++) {
@@ -119,11 +126,14 @@ public:
 					EssentMtrx(i, j) = x.col(col_ker)(k);
 				}
 			}
+
+			fout << EssentMtrx << '\n';
 			std::cout << "The solution is:\n" << EssentMtrx << std::endl;
 			calc_UV_S__R_t_x();
 
 			// std::cout << A*x.col(0) << '\n'
 		}
+		fout.close();
 
 	}
 
