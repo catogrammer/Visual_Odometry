@@ -7,23 +7,26 @@
 bool check_equatation(Eigen::Matrix3d E, Eigen::MatrixXd x, Eigen::MatrixXd _x){
     bool flag = true;
     for (size_t i = 0; i < x.cols(); i++) {
-        // bool tmp = !(bool)( x.col(i).transpose()*E*_x.col(i) );
         std::cout << "tmp : " << x.col(i).transpose()*E*_x.col(i) << '\n';
-        // flag = flag & !(bool)( x.col(i).transpose()*E*_x.col(i) );
+        flag = flag & ( x.col(i).transpose()*E*_x.col(i) < 1e-10);
     }
     return flag;
 }
 
-Eigen::Matrix3d read_e_matrix(){
-    Eigen::Matrix3d essent_matrix;
+std::vector<Eigen::Matrix3d> read_e_matrix(){
+
     std::string path = "../input_data/essential_matrix.txt";
     std::ifstream fin(path);
     if(!fin)
         std::cout << "data doesn't read" << '\n';
-
-    for (size_t i = 0; i < 3; i++)
-        for (size_t j = 0; j < 3; j++)
-            fin >> essent_matrix(i,j);
+    size_t count_e = 0;
+    fin >> count_e;
+    std::vector<Eigen::Matrix3d> essent_matrix(count_e);
+    for (auto &mtr : essent_matrix) {
+        for (size_t i = 0; i < 3; i++)
+            for (size_t j = 0; j < 3; j++)
+                fin >> mtr(i,j);
+    }
 
     fin.close();
     return essent_matrix;
@@ -54,20 +57,23 @@ std::pair <Eigen::MatrixXd,Eigen::MatrixXd> read_features() {
 
 int main(int argc, char const *argv[]) {
 
-    Eigen::Matrix3d essent_matrix = read_e_matrix();
-    std::cout << essent_matrix << '\n';
+    std::vector<Eigen::Matrix3d> essent_matrix = read_e_matrix();
+    for (auto el : essent_matrix) {
+        std::cout << "E : \n" << el << '\n';
+    }
     std::pair <Eigen::MatrixXd,Eigen::MatrixXd> features = read_features();
+    std::cout << "first : \n" << features.first << '\n' << "second : \n"
+    << features.second << '\n';
 
-    for (size_t i = 0; i < count_e; i++) {
-        if (check_equatation(essent_matrix, features.first, features.second)) std::cout << "equation was executed" << '\n';
+    for (auto mtrx : essent_matrix) {
+        if (check_equatation(mtrx, features.first, features.second)) std::cout << "equation was executed" << '\n';
         else std::cout << "All bad!!!" << '\n';
     }
 
-
     //
-    // Eigen::Vector3d _x(1, 32, 1);
-    // Eigen::Vector3d x(12, 132, 3);
-    // if (check_equatation(essent_matrix, x, _x)) std::cout << "equation was executed" << '\n';
+    // Eigen::Vector3d _x(0, 2, 3);
+    // Eigen::Vector3d x(1.94975, 2, 2.94975);
+    // if ( check_equatation(essent_matrix[0], x, _x) ) std::cout << "equation was executed" << '\n';
     // else std::cout << "All bad!!!" << '\n';
 
     return 0;

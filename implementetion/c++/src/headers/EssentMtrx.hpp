@@ -113,12 +113,18 @@ public:
 		Eigen::MatrixXd x = lu_decomp.kernel();
 		std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
 
+		std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
+		std::cout << "A*x(0) = " << (A*x.col(0)).transpose() << '\n';
+		std::cout << "A*x(1) = " << (A*x.col(1)).transpose() << '\n';
+		std::cout << "A*x(2) = " << (A*x.col(2)).transpose() << '\n';
+		std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
+
 		std::string path= "../input_data/essential_matrix.txt";
 		std::ofstream fout(path);
 		if(!fout){
 			std::cout << "file dosen't open" << '\n';
 		}
-
+		fout << x.cols() << '\n'; // number of vectors kernel
 		for (size_t col_ker = 0; col_ker < x.cols(); col_ker++) {
 			std::cout << "*******-" << col_ker << "-*****************" << '\n';
 			for(size_t i = 0, k = 0; i < 3; i++) {
@@ -127,7 +133,7 @@ public:
 				}
 			}
 
-			fout << EssentMtrx << '\n';
+			fout << EssentMtrx << "\n\n";
 			std::cout << "The solution is:\n" << EssentMtrx << std::endl;
 			calc_UV_S__R_t_x();
 
