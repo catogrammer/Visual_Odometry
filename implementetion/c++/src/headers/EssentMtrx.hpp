@@ -129,7 +129,7 @@ public:
 			std::cout << "*******-" << col_ker << "-*****************" << '\n';
 			for(size_t i = 0, k = 0; i < 3; i++) {
 				for(size_t j = 0; j < 3; j++, k++) {
-					EssentMtrx(i, j) = x.col(col_ker)(k);
+					EssentMtrx(j, i) = x.col(col_ker)(k);
 				}
 			}
 

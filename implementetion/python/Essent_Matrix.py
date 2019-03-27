@@ -3,7 +3,7 @@
 import numpy as np
 import json
 from scipy.linalg import null_space
-# from scipy.linalg import null_space
+# from scipy.linalg import 
 
 txt_data = '../input_data/smpldata.txt'
 json_data = 'data_coord.json'
@@ -46,11 +46,18 @@ print('Linear sys : \n',linear_sys)
 rank = np.linalg.matrix_rank(linear_sys)
 print('rank :', rank)
 
-ker = null_space(linear_sys)
-print('kernel : \n', ker)
-
-EssentMtrx = np.array([ker[0:3,0], ker[3:6,0], ker[6:9,0]])
+kernel = null_space(linear_sys)
+print('kernel : \n', kernel)
+ker = kernel[:,0]
+# EssentMtrx = np.array([ker[0:3,0], ker[3:6,0], ker[6:9,0]])
+EssentMtrx = np.array([[ker[0], ker[3], ker[6]], [ker[1], ker[4], ker[7]], [ker[2], ker[5], ker[8]]])
 print('EssentMtrx : \n', EssentMtrx)
+print('rank E = ', np.linalg.matrix_rank(EssentMtrx))
+
+print('******Chec xEx\'**************')
+for i in range(len(arr_x1)):
+    print('res : ', np.dot(np.dot(arr_x1[i],EssentMtrx),arr_x2[i]))
+
 
 print('Calc u, v : ')
 u, s, vh = np.linalg.svd(EssentMtrx, full_matrices=True)

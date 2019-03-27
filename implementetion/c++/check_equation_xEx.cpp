@@ -3,12 +3,13 @@
 #include <fstream>
 #include <string>
 #include <utility>
+#include <cmath>
 
 bool check_equatation(Eigen::Matrix3d E, Eigen::MatrixXd x, Eigen::MatrixXd _x){
     bool flag = true;
     for (size_t i = 0; i < x.cols(); i++) {
         std::cout << "tmp : " << x.col(i).transpose()*E*_x.col(i) << '\n';
-        flag = flag & ( x.col(i).transpose()*E*_x.col(i) < 1e-10);
+        flag = flag & ( fabs(x.col(i).transpose()*E*_x.col(i)) <= 1e-5);
     }
     return flag;
 }
