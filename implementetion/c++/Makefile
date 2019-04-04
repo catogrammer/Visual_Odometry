@@ -23,11 +23,14 @@ $(TARGET) : main.o
 main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp
 	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
 
-transform : Transformation_Matrix.cpp
-	$(CC) Transformation_Matrix.cpp $(CXXFLAGS) -o $(PATH_BUILD)transform_coord
+transform : transform_fetures.cpp
+	$(CC) transform_fetures.cpp $(CXXFLAGS) -o $(PATH_BUILD)transform_coord
 
 check_equat_xEx : check_equation_xEx.cpp
 	$(CC) check_equation_xEx.cpp $(CXXFLAGS) -o $(PATH_BUILD)chec_xEx
+
+homogenues_coords : glob_to_homogen_coords.cpp
+	$(CC) glob_to_homogen_coords.cpp $(CXXFLAGS) -o $(PATH_BUILD)homo_coord
 
 clean :
 	rm -rf  $(PATH_BUILD) *.o

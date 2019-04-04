@@ -4,12 +4,12 @@
 
 
 int main(int argc, char const *argv[]) {
-	std::string path = "../input_data/smpldata.txt";
+	std::string path = "../input_data/features.txt";
 	EsssentialMatrix Ess;
 	Ess.simpleRead(path);
 	// Ess.printRead();
 	Ess.calculateMatrix();
-	
+
 	// double a = 1.5;
 	// double b = a;
 	// while (a-1) {

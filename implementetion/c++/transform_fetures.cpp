@@ -6,14 +6,7 @@
 #include <fstream>
 
 #include <eigen3/Eigen/Dense>
-
-struct Camera {
-    Eigen::Vector3d cam_pose; //position of cameras in global coord
-    Eigen::Vector3d normal; // cameras direction //view direction in global coord
-    Eigen::Vector3d horizon; // right vector or x' in global coord
-    Eigen::Vector3d vertical; // left vector or y' in global coord
-    Eigen::MatrixXd features; // in local coordinate
-};
+#include "Camera.hpp"
 
 void write_to_file(Eigen::MatrixXd features, std::string path) {
     std::ofstream fout(path, std::ofstream::app);
@@ -49,6 +42,23 @@ void read_data_def_cam(Camera &cam_1, Camera &cam_2, std::string path) {
     fin.close();
 }
 
+Eigen::MatrixXd read_local_coord(std::string path) {
+    std::ifstream fin(path);
+    if(!fin){
+        std::cout << "data doesn't read" << '\n';
+    }
+    size_t count_features = 0;
+    fin >> count_features;
+
+    Eigen::MatrixXd features(3,count_features);
+    for (size_t i = 0; i < count_features; i++)
+        for (size_t j = 0; j < 3; j++)
+            fin >> features(j,i);
+
+    fin.close();
+    return features;
+}
+
 int main(int argc, char const *argv[]) {
     Camera camera_1;
     Camera camera_2;
@@ -61,29 +71,19 @@ int main(int argc, char const *argv[]) {
     camera_2.normal    = camera_2.normal.normalized(); //loc in cam pose coord
     camera_2.horizon   = camera_2.horizon.normalized(); //loc in cam pose coord
     //
-    size_t count_features = 9;
-    camera_1.features = Eigen::MatrixXd(3,count_features); //(row,column)
-    camera_2.features = Eigen::MatrixXd(3,count_features);
+    camera_1.features = read_local_coord("../input_data/homogen_features.txt");
+    camera_2.features = Eigen::MatrixXd(3, camera_1.features.cols()); //(row,column)
 
     //********************
-    std::srand(std::time(0)); //std::rand() % left_range - right_range
-
-    // for (size_t i = 0; i < 9; i++) {
-    //     camera_1.features.col(i) << (std::rand() % (-2) - 2), 1, (std::rand() % (-2) - 2);
-    //     /*
-    //         постоянной должно быть направление номали
-    //     */
-    // }
-    // (horizon - x_pixel, normal - deepth, vertical - y_pixel)
-    camera_1.features.col(0) << 0, 0, 3;
-    camera_1.features.col(1) << 1, 1, 3,
-    camera_1.features.col(2) << 1, 2, 3,
-    camera_1.features.col(3) << 2, 2, 3,
-    camera_1.features.col(4) << -1, 1, 3,
-    camera_1.features.col(5) << -1, 2, 3,
-    camera_1.features.col(6) << -2, 2, 3,
-    camera_1.features.col(7) << 0, 1, 3,
-    camera_1.features.col(8) << 0, 2, 3;
+    // camera_1.features.col(0) << 0, 0, 3;
+    // camera_1.features.col(1) << 1, 1, 3,
+    // camera_1.features.col(2) << 1, 2, 3,
+    // camera_1.features.col(3) << 2, 2, 3,
+    // camera_1.features.col(4) << -1, 1, 3,
+    // camera_1.features.col(5) << -1, 2, 3,
+    // camera_1.features.col(6) << -2, 2, 3,
+    // camera_1.features.col(7) << 0, 1, 3,
+    // camera_1.features.col(8) << 0, 2, 3;
     // camera_1.features.col(9) << 2, 3, 3;
     // camera_1.features.col(10) << 3, 2, 3;
 
@@ -117,14 +117,11 @@ int main(int argc, char const *argv[]) {
     std::cout << camera_2.features << '\n';
     std::cout << "****************************************************" << '\n';
 
-    std::string path = "../input_data/smpldata.txt";
+    std::string path = "../input_data/features.txt";
     std::ofstream fout(path, std::ofstream::out);
     fout << camera_1.features.cols() << '\n';
     fout.close();
 
-    // std::ofstream fout_(path, std::ofstream::app);
-    // fout_ << camera_1.features.cols();
-    // fout_.close();
     write_to_file(camera_1.features, path);
     write_to_file(camera_2.features, path);
 
