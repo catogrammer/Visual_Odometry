@@ -3,7 +3,7 @@
 import numpy as np
 import json
 from scipy.linalg import null_space
-# from scipy.linalg import 
+# from scipy.linalg import
 
 txt_data = '../input_data/smpldata.txt'
 json_data = 'data_coord.json'
@@ -59,21 +59,25 @@ for i in range(len(arr_x1)):
     print('res : ', np.dot(np.dot(arr_x1[i],EssentMtrx),arr_x2[i]))
 
 
-print('Calc u, v : ')
-u, s, vh = np.linalg.svd(EssentMtrx, full_matrices=True)
+# print('Calc u, v : ')
+# u, s, vh = np.linalg.svd(EssentMtrx, full_matrices=True)
+#
+# print('u : \n', u)
+# print('s : \n', s)
+# print('vh : \n', vh)
+
+print('!!!!!!!!!!!!!')
+print('CALCA A -  u, v : ')
+A = np.array([[0, 0.61, 0],[0, 0, -0.61],[0, 1, 0]])
+u, s, vh = np.linalg.svd(A, full_matrices=True)
 
 print('u : \n', u)
 print('s : \n', s)
 print('vh : \n', vh)
+
+#
 w = np.array([[0,1,0],[-1,0,0],[0,0,1]])
 R = np.dot(np.dot(u,w.T), vh)
 t_x = np.dot(np.dot(np.dot(u,w),np.diag(s)), u.T)
 print('Rotation : \n', R)
 print('shift : \n', t_x)
-
-
-# U, s, V = np.linalg.svd(linear_sys,full_matrices=False)
-# print("U : ", U)
-# print("s : ", s)
-# print("V : ", V)
-# svd = linalg.svd(a[, full_matrices, compute_uv])
