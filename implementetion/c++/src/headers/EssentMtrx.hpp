@@ -96,10 +96,12 @@ public:
 
 	void calculateMatrix(/* arguments */) {
 		std::cout << "features size : " << features.size() << '\n';
+
 		for (auto el : features) {
 			double *p = calc_polynom(el.first.coord, el.second.coord);
 			system_lin_equat.push_back(p);
 		}
+
 		size_t size_m = features.size();
 		Eigen::MatrixXd A(size_m, 9);
 		for (size_t i = 0; i < size_m; i++) {
