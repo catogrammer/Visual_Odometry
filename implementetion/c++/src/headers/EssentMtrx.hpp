@@ -170,22 +170,24 @@ public:
 
 	void calculateMatrix(/* arguments */) {
 		std::cout << "features size : " << features.size() << '\n';
-
+		// вычисляем систему из наших точек
 		for (auto el : features) {
 			double *p = calc_polynom(el.first.coord, el.second.coord);
 			system_lin_equat.push_back(p);
 		}
 
 		size_t size_m = features.size();
+		// Переходим на Eigen
 		Eigen::MatrixXd A(size_m, 9);
 		for (size_t i = 0; i < size_m; i++) {
 			for (size_t j = 0; j < 9; j++) {
 				A(i,j) = system_lin_equat[i][j];
 			}
 		}
-		std::cout << "Matrix A : \n" << A << '\n';
-		Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
 
+		std::cout << "Matrix A : \n" << A << '\n';
+		// Находим ядро системы лин. ур.
+		Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
 		Eigen::MatrixXd x = lu_decomp.kernel();
 		std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
 
@@ -214,6 +216,8 @@ public:
 
 			fout << EssentMtrx << "\n\n";
 			std::cout << "The solution is:\n" << EssentMtrx << std::endl;
+
+			// раскладываем полученную EssentMtrx с помощью SVD на UVS  и находим R и t_x
 			calc_UV_S__R_t_x();
 
 			// std::cout << A*x.col(0) << '\n'
