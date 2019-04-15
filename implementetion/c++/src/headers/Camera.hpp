@@ -28,7 +28,7 @@ public:
         if(!fout.is_open()){
             std::cout << "data doesn't read" << '\n';
         }
-        for (size_t i = 0; i < this->features.cols(); i++) {
+        for (size_t i = 0; i < (size_t)this->features.cols(); i++) {
             fout << this->features(0, i) << ' ' << this->features(1, i) << ' ' << this->features(2, i) << '\n';
         }
         fout << '\n';
