@@ -13,6 +13,7 @@ int main(int argc, char const *argv[]) {
 	Ess.tranform_features_into_coord_2_cam();
 	// получаем однородные координаты из глобальных для камеры 1 и 2
 	//записываем их в файил features
+
 	Ess.get_homogenues_coordinate();
 
 	std::string path = "../input_data/features.txt";

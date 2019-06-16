@@ -97,8 +97,9 @@ public:
 	}
 
 	void get_homogenues_coordinate() {
-	    double D_1 = (-1)*(camera_1->normal.dot(camera_1->cam_pose));
-		camera_1->transform_to_homogen(D_1);
+
+	    // double D_1 = (-1)*(camera_1->normal.dot(camera_1->cam_pose));
+		// camera_1->transform_to_homogen(D_1);
 
 	    // std::cout << "global features : \n" << camera_1->features << '\n';
 	    // std::cout << "Cam data : "
@@ -108,8 +109,8 @@ public:
 	    //           << "\nvertical : " << camera_1->vertical.transpose() << '\n';
 	    // std::cout << "local features : \n" << camera_1->features  << '\n';
 
-	    double D_2 = (-1)*(camera_2->normal.dot(camera_2->cam_pose));
-		camera_2->transform_to_homogen(D_2);
+	    // double D_2 = (-1)*(camera_2->normal.dot(camera_2->cam_pose));
+		// camera_2->transform_to_homogen(D_2);
 
 		std::string path = "../input_data/features.txt";
 		std::ofstream fout(path, std::ofstream::out);
@@ -191,11 +192,11 @@ public:
 		Eigen::MatrixXd x = lu_decomp.kernel();
 		std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
 
-		std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
-		std::cout << "A*x(0) = " << (A*x.col(0)).transpose() << '\n';
-		std::cout << "A*x(1) = " << (A*x.col(1)).transpose() << '\n';
-		std::cout << "A*x(2) = " << (A*x.col(2)).transpose() << '\n';
-		std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
+		// std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
+		// std::cout << "A*x(0) = " << (A*x.col(0)).transpose() << '\n';
+		// std::cout << "A*x(1) = " << (A*x.col(1)).transpose() << '\n';
+		// std::cout << "A*x(2) = " << (A*x.col(2)).transpose() << '\n';
+		// std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
 
 		std::string path= "../input_data/essential_matrix.txt";
 		std::ofstream fout(path);
