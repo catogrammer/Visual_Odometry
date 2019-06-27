@@ -9,28 +9,22 @@ PATH_HPP =./src/headers/
 PATH_BUILD =./build/
 
 TARGET =essent_matrix
-SRC =main.cpp
-OBJ =$(SRC:.cpp = .o)
+
+SRC_DIR =./src/
+OBJ_DIR = ./obj/
+
+SRC_FILES := $(wildcard $(SRC_DIR)*.cpp $(SRC_DIR)*.c)
+OBJ_FILES := $(patsubst $(SRC_DIR)%.cpp,$(OBJ_DIR)%.o,$(SRC_FILES))
 
 # сделать отдельную папку для объектников или их тоже в build, тогкда как?
 
 all : $(TARGET)
 
-$(TARGET) : main.o
-	if [ ! -d $(PATH_BUILD) ]; then mkdir $(PATH_BUILD); fi
-	$(CC) -o $(PATH_BUILD)$(TARGET) main.o
+$(TARGET) : $(OBJ_FILES)
+	$(CC) -o $@  $^ $(GLFWFLAGS) $(GLADFLAGS)
 
-main.o : main.cpp $(PATH_HPP)EssentMtrx.hpp
-	$(CC) $(CFLAGS) $(SRC) $(CXXFLAGS)
-
-transform : transform_fetures.cpp
-	$(CC) transform_fetures.cpp $(CXXFLAGS) -o $(PATH_BUILD)transform_coord
-
-check_equat_xEx : check_equation_xEx.cpp
-	$(CC) check_equation_xEx.cpp $(CXXFLAGS) -o $(PATH_BUILD)chec_xEx
-
-homogenues_coords : glob_to_homogen_coords.cpp
-	$(CC) glob_to_homogen_coords.cpp $(CXXFLAGS) -o $(PATH_BUILD)homo_coord
+$(OBJ_DIR)%.o : $(SRC_DIR)%.cpp
+	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $@  $<
 
 clean :
-	rm -rf  $(PATH_BUILD) *.o
+	rm -rf  $(OBJ_DIR)*.o  $(TARGET)

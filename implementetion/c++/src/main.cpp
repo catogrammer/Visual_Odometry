@@ -1,5 +1,5 @@
 #include <iostream>
-#include "./src/headers/EssentMtrx.hpp"
+#include "headers/EssentMtrx.hpp"
 // #include <Eigen/Dense>
 
 
@@ -10,12 +10,12 @@ int main(int argc, char const *argv[]) {
 
 	// полчуаем теже точки в координатах камеры 2
 	// файлы со входными данными - def_cam_(номер камеры)_data, global_coords
-	Ess.tranform_features_into_coord_2_cam();
+	Ess.tranform_features_into_coord_cam();
 	// получаем однородные координаты из глобальных для камеры 1 и 2
 	//записываем их в файил features
 
 	Ess.get_homogenues_coordinate();
-
+	//
 	std::string path = "../input_data/features.txt";
 	Ess.simpleRead(path);
 	// Ess.printRead();
