@@ -20,7 +20,7 @@ public:
 
     void write_to_file(std::string path);
 
-    void coord_in_cam_space(double D);
+    void get_homogen_coord();
 
 };
 

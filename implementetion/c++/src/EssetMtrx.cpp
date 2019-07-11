@@ -17,61 +17,49 @@ Eigen::MatrixXd EsssentialMatrix::read_features(std::string path) {
     return features;
 }
 
-// Eigen::MatrixXd coord_in_cam_space(const Eigen::MatrixXd& features, const Eigen::Vector3d& pose) {
-//     size_t count_features = features.cols();
-//     Eigen::MatrixXd res = Eigen::MatrixXd(3, count_features);
-//     for (size_t i = 0; i < count_features; i++)
-//             res.col(i) = features.col(i) - pose;
-//     return res;
-// }
+void transform_featutes(Camera& cam, const Eigen::MatrixXd& features) {
+    // normalisation of coordinates
 
+    // cam.normal    = cam.normal.normalized(); // y
+    // cam.horizon   = cam.horizon.normalized(); // x
+
+    // find y'
+    cam.vertical << cam.horizon.cross(cam.normal); // == x * n
+
+
+    Eigen::Matrix3d transf_m;
+    transf_m << cam.horizon, cam.vertical, cam.normal;
+
+    std::cout << "Transform matrix \n" << transf_m <<'\n';
+
+    cam.features = Eigen::MatrixXd(features.rows(), features.cols());
+
+    std::cout << "size = " << features.cols() << '\n';
+    for (size_t i = 0; i < (size_t)features.cols(); i++) {
+        // std::cout << "el = " << features.col(i) << '\n';
+        cam.features.col(i) << (transf_m.inverse() * (features.col(i) - cam.cam_pose));
+    }
+
+}
 
 void EsssentialMatrix::tranform_features_into_coord_cam() {
     this->camera_1 = new Camera();
     this->camera_2 = new Camera();
+
     camera_1->read_property_cam("../input_data/def_cam_1_data.txt");
     camera_2->read_property_cam("../input_data/def_cam_2_data.txt");
 
-    // normalisation of coordinates
-    camera_1->normal    = camera_1->normal.normalized(); // y
-    camera_1->horizon   = camera_1->horizon.normalized(); // x
-    camera_2->normal    = camera_2->normal.normalized(); //loc in cam pose coord
-    camera_2->horizon   = camera_2->horizon.normalized(); //loc in cam pose coord
-    // find y'
-    camera_1->vertical << camera_1->horizon.cross(camera_1->normal); // == x * n
-    camera_2->vertical << camera_2->horizon.cross(camera_2->normal);
+    Eigen::MatrixXd orig_features = read_features("../input_data/global_coords.txt");
 
-    // camera_1.features = read_local_coord("../input_data/homogen_features.txt");
-    Eigen::MatrixXd orig_feat = read_features("../input_data/global_coords.txt");
-    std::cout << "*****************features - orig***********************" << '\n';
-    std::cout << orig_feat << '\n';
-    std::cout << "****************************************************" << '\n';
-    std::cout << "cam 1 pose : " << camera_1->cam_pose.transpose() << '\n';
-    std::cout << "cam 1 horizon : " << camera_1->horizon.transpose() << '\n';
-    std::cout << "cam 1 normal : " << camera_1->normal.transpose() << '\n';
+    transform_featutes(*camera_1, orig_features);
+    transform_featutes(*camera_2, orig_features);
 
-    //
-    // camera_1->features = coord_in_cam_space(orig_feat.array(), camera_1->cam_pose.array()); //(row,column)
-    // camera_2->features = coord_in_cam_space(orig_feat.array(), camera_2->cam_pose.array());; //(row,column)
-    camera_1->features = orig_feat;
-    camera_2->features = orig_feat;
 }
 
 void EsssentialMatrix::get_homogenues_coordinate() {
 
-    // std::cout << "global features : \n" << camera_1->features << '\n';
-    // std::cout << "Cam data : "
-    //           << "\npose : " << camera_1->cam_pose.transpose()
-    //           << "\nnormal : "   << camera_1->normal.transpose()
-    //           << "\nhorizon : "  << camera_1->horizon.transpose()
-    //           << "\nvertical : " << camera_1->vertical.transpose() << '\n';
-    // std::cout << "local features : \n" << camera_1->features  << '\n';
-
-    double D_1 = (-1)*(camera_1->normal.dot(camera_1->cam_pose));
-    double D_2 = (-1)*(camera_2->normal.dot(camera_2->cam_pose));
-
-    camera_1->coord_in_cam_space(D_1);
-    camera_2->coord_in_cam_space(D_2);
+    camera_1->get_homogen_coord();
+    camera_2->get_homogen_coord();
 
     std::cout << "*****************features - 1***********************" << '\n';
     std::cout << camera_1->features << '\n';
@@ -116,11 +104,11 @@ void EsssentialMatrix::calc_UV_S__R_t_x() {
 
     Eigen::Matrix3d W_T, W, R, S, t_x;
     W_T << 0, 1, 0,
-          -1,  0, 0,
-           0,  0, 1;
-    W <<   0,  -1, 0,
-           1,  0, 0,
-           0,  0, 1;
+          -1, 0, 0,
+           0, 0, 1;
+    W <<   0,-1, 0,
+           1, 0, 0,
+           0, 0, 1;
     S << svd.singularValues()[0], 0, 0,
          0, svd.singularValues()[1], 0,
          0, 					  0, 0;
@@ -135,7 +123,7 @@ void EsssentialMatrix::calc_UV_S__R_t_x() {
     */
 
     std::cout << "Vector t_x : \n" << t_x(2,1) << ' '
-              << t_x(2,0) << ' ' << t_x(1,0) << '\n';
+              << t_x(0,2) << ' ' << t_x(1,0) << '\n';
 }
 
 void EsssentialMatrix::calculateMatrix(/* arguments */) {

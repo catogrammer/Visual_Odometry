@@ -27,21 +27,14 @@ void Camera::write_to_file(std::string path) {
     fout.close();
 }
 
-Eigen::Vector3d projection_on_palne(Eigen::Vector3d normal, Eigen::Vector3d point, double D){
-    return point - (((point.dot(normal)) + D) / (normal.dot(normal)))*normal;
-}
-
-void Camera::coord_in_cam_space(double D) {
+void Camera::get_homogen_coord() {
     size_t count_features =  this->features.cols();
-    for (size_t i = 0; i < count_features; i++) {
-        Eigen::Vector3d b = projection_on_palne(this->normal, this->features.col(i), D);
-        // std::cout << "b = " << b.transpose() << '\n';
-        this->features.col(i) = b;
-    }
-
+    Eigen::Matrix3d transf_m;
+    transf_m << horizon, vertical, normal;
     for (size_t i = 0; i < count_features; i++) {
         Eigen::Vector3d el = this->features.col(i);
-        this->features.col(i) = Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2]);
-    }
+        // this->features.col(i) = transf_m.inverse()*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2]) + cam_pose);
+        this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2])) + cam_pose;
 
+    }
 }
