@@ -7,33 +7,22 @@
 #include "Camera.hpp"
 
 int main(int argc, char const *argv[]) {
-    std::string path_glob_c = "../input_data/global_coords.txt";
-    std::string path_cam_def = "../input_data/def_cam_data.txt";
+    Camera* cam_1 = new Camera();
+    Camera* cam_2 = new Camera();
 
-    Camera *camera = new Camera();
-    camera->read_property_cam(path_cam_def);
-    camera->read_features(path_glob_c);
+    cam_1->read_property_cam("../input_data/def_cam_1_data.txt");
+    cam_2->read_property_cam("../input_data/def_cam_2_data.txt");
 
-    camera->vertical = camera->horizon.cross(camera->normal).transpose();
-    double D = (-1)*(camera->normal.dot(camera->cam_pose));
+    Eigen::MatrixXd orig_features = read_features("../input_data/global_coords.txt");
 
-    std::cout << "global features : \n" << camera->features << '\n';
-    std::cout << "Cam data : "
-              << "\npose : " << camera->cam_pose.transpose()
-              << "\nnormal : "   << camera->normal.transpose()
-              << "\nhorizon : "  << camera->horizon.transpose()
-              << "\nvertical : " << camera->vertical.transpose() << '\n';
+    cam_1->features = orig_features;
+    cam_2->features = orig_features;
 
+    cam_1->transform_featutes();
+    cam_2->transform_featutes();
 
-    camera->transform_to_homogen(D);
-    std::cout << "local features : \n" << camera->features  << '\n';
-
-    std::string path_homo_f = "../input_data/homogen_features.txt";
-    std::ofstream fout(path_homo_f, std::ofstream::out);
-    fout << camera->features.cols() << '\n';
-    fout.close();
-
-    camera->write_to_file(path_homo_f);
+    cam_1->get_homogen_coord();
+    cam_2->get_homogen_coord();
 
     return 0;
 }

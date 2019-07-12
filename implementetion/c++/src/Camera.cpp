@@ -33,8 +33,31 @@ void Camera::get_homogen_coord() {
     transf_m << horizon, vertical, normal;
     for (size_t i = 0; i < count_features; i++) {
         Eigen::Vector3d el = this->features.col(i);
-        // this->features.col(i) = transf_m.inverse()*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2]) + cam_pose);
         this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2])) + cam_pose;
-
     }
+}
+
+void Camera::transform_featutes() {
+    // normalisation of coordinates
+
+    // cam.normal    = cam.normal.normalized(); // y
+    // cam.horizon   = cam.horizon.normalized(); // x
+
+    // find y'
+    this->vertical << this->horizon.cross(this->normal); // == x * n
+
+
+    Eigen::Matrix3d transf_m;
+    transf_m << this->horizon, this->vertical, this->normal;
+
+    // std::cout << "Transform matrix \n" << transf_m <<'\n';
+
+    // features = Eigen::MatrixXd(features.rows(), features.cols());
+
+    std::cout << "size = " << this->features.cols() << '\n';
+    for (size_t i = 0; i < (size_t)features.cols(); i++) {
+        // std::cout << "el = " << features.col(i) << '\n';
+        this->features.col(i) << transf_m.inverse() * (this->features.col(i) - this->cam_pose);
+    }
+
 }

@@ -89,3 +89,29 @@ camera_1->write_to_file(path);
 Eigen::Vector3d projection_on_palne(Eigen::Vector3d normal, Eigen::Vector3d point, Eigen::Vector3d s, double D){
     return point - (((point.dot(normal)) + D) / (s.dot(normal)))*s;
 }
+
+
+void transform_featutes(Camera& cam, const Eigen::MatrixXd& features) {
+    // normalisation of coordinates
+
+    // cam.normal    = cam.normal.normalized(); // y
+    // cam.horizon   = cam.horizon.normalized(); // x
+
+    // find y'
+    cam.vertical << cam.horizon.cross(cam.normal); // == x * n
+
+
+    Eigen::Matrix3d transf_m;
+    transf_m << cam.horizon, cam.vertical, cam.normal;
+
+    std::cout << "Transform matrix \n" << transf_m <<'\n';
+
+    cam.features = Eigen::MatrixXd(features.rows(), features.cols());
+
+    std::cout << "size = " << features.cols() << '\n';
+    for (size_t i = 0; i < (size_t)features.cols(); i++) {
+        // std::cout << "el = " << features.col(i) << '\n';
+        cam.features.col(i) << (transf_m.inverse() * (features.col(i) - cam.cam_pose));
+    }
+
+}

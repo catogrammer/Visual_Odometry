@@ -22,6 +22,8 @@ public:
 
     void get_homogen_coord();
 
+    void transform_featutes();
+
 };
 
 #endif
