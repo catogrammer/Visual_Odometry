@@ -33,26 +33,31 @@ void Camera::get_homogen_coord() {
     transf_m << horizon, vertical, normal;
     for (size_t i = 0; i < count_features; i++) {
         Eigen::Vector3d el = this->features.col(i);
-        this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2])) + cam_pose;
+        this->features.col(i) = Eigen::Vector3d(el[0]/el[1], el[2]/el[1], el[1]/el[1]);
+
+        // this->features.col(i) = Eigen::Vector3d(el[0]/el[1], el[1]/el[1], el[2]/el[1]);
+        // this->features.col(i) = Eigen::Vector3d(el[0], el[1], el[2]);
+
+        /*
+        // this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2])) + cam_pose;
+        // geting global position coordinates points in camera Coordinate.
+        */
+
     }
 }
 
 void Camera::transform_featutes() {
-    // normalisation of coordinates
-
-    // cam.normal    = cam.normal.normalized(); // y
-    // cam.horizon   = cam.horizon.normalized(); // x
-
-    // find y'
     this->vertical << this->horizon.cross(this->normal); // == x * n
 
+    // normalisation of coordinates
+    // this->normal    = this->normal.normalized(); // y
+    // this->horizon   = this->horizon.normalized(); // x
+    // this->vertical   = this->horizon.normalized(); //z
 
     Eigen::Matrix3d transf_m;
     transf_m << this->horizon, this->vertical, this->normal;
 
     // std::cout << "Transform matrix \n" << transf_m <<'\n';
-
-    // features = Eigen::MatrixXd(features.rows(), features.cols());
 
     std::cout << "size = " << this->features.cols() << '\n';
     for (size_t i = 0; i < (size_t)features.cols(); i++) {

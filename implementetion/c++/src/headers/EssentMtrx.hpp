@@ -50,7 +50,7 @@ class EsssentialMatrix {
 
 public:
 	Eigen::MatrixXd read_features(std::string path);
-	
+
 	void tranform_features_into_coord_cam();
 
 	void get_homogenues_coordinate();
@@ -64,6 +64,9 @@ public:
 	void simpleRead(std::string path);
 
 	void printRead();
+
+	double* get_standart_polynom(double a[3], double b[3]);
+	void get_Ae_Matrix();
 };
 
 #endif //EssentMtrx

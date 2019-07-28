@@ -69,6 +69,22 @@ double* EsssentialMatrix::calc_polynom(double x[3], double _x[3]) {
     return equation;
 }
 
+double* EsssentialMatrix::get_standart_polynom(double a[3], double b[3]){
+    int count = 0;
+    double *equation = new double[9];
+    equation[0] = a[0]*b[0];
+    equation[1] = a[1]*b[0];
+    equation[2] =      b[0];
+    equation[3] = a[0]*b[1];
+    equation[4] = a[1]*b[1];
+    equation[5] =      b[1];
+    equation[6] = a[0];
+    equation[7] = a[1];
+    equation[8] = 1.0;
+
+    return equation;
+}
+
 void EsssentialMatrix::calc_UV_S__R_t_x() {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
     std::cout << "singular values are:" << std::endl << svd.singularValues() << std::endl;
@@ -105,11 +121,31 @@ void EsssentialMatrix::calc_UV_S__R_t_x() {
               << t_x(0,2) << ' ' << t_x(1,0) << '\n';
 }
 
+void EsssentialMatrix::get_Ae_Matrix(/* arguments */) {
+    for (auto el : features) {
+        double *p = calc_polynom(el.first.coord, el.second.coord);
+
+        // double a[] = {el.first.coord[0],el.first.coord[1],el.first.coord[2]};
+        // double b[] = {el.second.coord[0],el.second.coord[1],el.second.coord[2]};
+        // double p[] = {(a[0]*b[0]), (a[1]*b[0]), b[0], (b[1]*a[0]),
+        //                  (b[1]*a[1]), b[1], a[0], a[1], 1.0};
+        // double* ar = p;
+        // double* arr = &p;
+        // std::cout << "Arr : ";
+        // for (size_t i = 0; i < 9; i++) {
+        //     std::cout << p[i] << ' ';
+        // } std::cout << '\n';
+        system_lin_equat.push_back(p);
+        // delete[] p;
+
+    }
+}
+
 void EsssentialMatrix::calculateMatrix(/* arguments */) {
     std::cout << "features size : " << features.size() << '\n';
     // вычисляем систему из наших точек
     for (auto el : features) {
-        double *p = calc_polynom(el.first.coord, el.second.coord);
+        double *p = get_standart_polynom(el.first.coord, el.second.coord);
         system_lin_equat.push_back(p);
     }
 
