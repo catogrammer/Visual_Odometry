@@ -17,7 +17,6 @@ Eigen::MatrixXd EsssentialMatrix::read_features(std::string path) {
     return features;
 }
 
-
 void EsssentialMatrix::tranform_features_into_coord_cam() {
     this->camera_1 = new Camera();
     this->camera_2 = new Camera();
@@ -37,16 +36,16 @@ void EsssentialMatrix::tranform_features_into_coord_cam() {
 
 void EsssentialMatrix::get_homogenues_coordinate() {
 
-    camera_1->get_homogen_coord();
-    camera_2->get_homogen_coord();
-
     std::cout << "*****************features - 1***********************" << '\n';
     std::cout << camera_1->features << '\n';
-    std::cout << "****************************************************" << '\n';
 
     std::cout << "*****************features - 2***********************" << '\n';
     std::cout << camera_2->features << '\n';
-    std::cout << "****************************************************" << '\n';
+
+
+    camera_1->get_homogen_coord();
+    camera_2->get_homogen_coord();
+
 
     std::string path = "../input_data/features.txt";
     std::ofstream fout(path, std::ofstream::out);
@@ -58,36 +57,12 @@ void EsssentialMatrix::get_homogenues_coordinate() {
 
 }
 
-double* EsssentialMatrix::calc_polynom(double x[3], double _x[3]) {
-    int count = 0;
-    double *equation = new double[9];
-    for (size_t i = 0; i < 3; i++) {
-        for (size_t j = 0; j < 3; j++) {
-            equation[count++] = x[j]*_x[i];
-        }
-    }
-    return equation;
-}
-
-double* EsssentialMatrix::get_standart_polynom(double a[3], double b[3]){
-    int count = 0;
-    double *equation = new double[9];
-    equation[0] = a[0]*b[0];
-    equation[1] = a[1]*b[0];
-    equation[2] =      b[0];
-    equation[3] = a[0]*b[1];
-    equation[4] = a[1]*b[1];
-    equation[5] =      b[1];
-    equation[6] = a[0];
-    equation[7] = a[1];
-    equation[8] = 1.0;
-
-    return equation;
-}
-
 void EsssentialMatrix::calc_UV_S__R_t_x() {
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    std::cout << "singular values are:" << std::endl << svd.singularValues() << std::endl;
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(EssentMtrx,
+                                            Eigen::ComputeThinU
+                                          | Eigen::ComputeThinV);
+    std::cout << "singular values are:" << std::endl << svd.singularValues()
+              << std::endl;
     std::cout << "U matrix: \n" << svd.matrixU() << std::endl;
     std::cout << "V matrix:" << std::endl << svd.matrixV() << std::endl;
     /*
@@ -121,54 +96,60 @@ void EsssentialMatrix::calc_UV_S__R_t_x() {
               << t_x(0,2) << ' ' << t_x(1,0) << '\n';
 }
 
-void EsssentialMatrix::get_Ae_Matrix(/* arguments */) {
-    for (auto el : features) {
-        double *p = calc_polynom(el.first.coord, el.second.coord);
-
-        // double a[] = {el.first.coord[0],el.first.coord[1],el.first.coord[2]};
-        // double b[] = {el.second.coord[0],el.second.coord[1],el.second.coord[2]};
-        // double p[] = {(a[0]*b[0]), (a[1]*b[0]), b[0], (b[1]*a[0]),
-        //                  (b[1]*a[1]), b[1], a[0], a[1], 1.0};
-        // double* ar = p;
-        // double* arr = &p;
-        // std::cout << "Arr : ";
-        // for (size_t i = 0; i < 9; i++) {
-        //     std::cout << p[i] << ' ';
-        // } std::cout << '\n';
-        system_lin_equat.push_back(p);
-        // delete[] p;
-
-    }
-}
-
-void EsssentialMatrix::calculateMatrix(/* arguments */) {
-    std::cout << "features size : " << features.size() << '\n';
-    // вычисляем систему из наших точек
-    for (auto el : features) {
-        double *p = get_standart_polynom(el.first.coord, el.second.coord);
-        system_lin_equat.push_back(p);
-    }
-
+Eigen::MatrixXd EsssentialMatrix::get_Ae_matrix() {
     size_t size_m = features.size();
-    // Переходим на Eigen
+
     Eigen::MatrixXd A(size_m, 9);
+    // loop for move on A matrix
     for (size_t i = 0; i < size_m; i++) {
-        for (size_t j = 0; j < 9; j++) {
-            A(i,j) = system_lin_equat[i][j];
+            // loop for move on linear equation
+        for (size_t k = 0, j = 0; k < 3; k++) {
+            for (size_t r = 0; r < 3; r++, j++) {
+                A(i, j) = features[i].first.coord[r]
+                          * features[i].second.coord[k];
+            }
         }
     }
+    std::cout << "A matrix : \n" << A << '\n';
+    return A;
+}
 
-    std::cout << "Matrix A : \n" << A << '\n';
-    // Находим ядро системы лин. ур.
-    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(A);
-    Eigen::MatrixXd x = lu_decomp.kernel();
-    std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel() << std::endl;
+Eigen::MatrixXd EsssentialMatrix::get_kernel_Ae_matrix(){
+    // Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(get_Ae_matrix());
+    // std::cout << "plurality vectors of kernel:\n" << lu_decomp.kernel()
+    //           << std::endl;
+    // return lu_decomp.kernel();
 
-    // std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
-    // std::cout << "A*x(0) = " << (A*x.col(0)).transpose() << '\n';
-    // std::cout << "A*x(1) = " << (A*x.col(1)).transpose() << '\n';
-    // std::cout << "A*x(2) = " << (A*x.col(2)).transpose() << '\n';
-    // std::cout << "!!!!!!!!!!!!!!checking!!!!!!!!!!!!!!!" << '\n';
+    Eigen::EigenSolver<Eigen::MatrixXd> es(get_Ae_matrix());
+    std::cout << "The first eigenvectors:"
+         << std::endl << es.eigenvectors().real() << std::endl;
+    return es.eigenvectors().real();
+}
+
+Eigen::VectorXd EsssentialMatrix::SVD_decompose() {
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(get_Ae_matrix(), Eigen::ComputeThinU | Eigen::ComputeThinV);
+    std::cout << "Its right singular vectors are the columns of the thin V matrix:"
+         << std::endl << svd.matrixV() << std::endl;
+
+    return svd.matrixV().col(svd.matrixV().rows()-1);
+}
+
+void EsssentialMatrix::calculate_Ess_matrix(Eigen::VectorXd v) {
+    for(size_t i = 0, k = 0; i < 3; i++)
+        for(size_t j = 0; j < 3; j++, k++)
+            EssentMtrx(j, i) = v(k); // mb make some lambda???
+}
+
+void EsssentialMatrix::calculate_from_svd() {
+    calculate_Ess_matrix(SVD_decompose());
+    std::cout << "The solution is:\n" << EssentMtrx << std::endl;
+    calc_UV_S__R_t_x();
+}
+
+void EsssentialMatrix::calculate_from_ker() {
+    std::cout << "features size : " << features.size() << '\n';
+    Eigen::MatrixXd ker = get_kernel_Ae_matrix();
+
 
     std::string path= "../input_data/essential_matrix.txt";
     std::ofstream fout(path);
@@ -178,24 +159,18 @@ void EsssentialMatrix::calculateMatrix(/* arguments */) {
 
     // для каждого вектора из ядра составляем матрицу Е
     // и вычисляем R и t_x из разожения SVD в calc_UV_S__R_t_x
-    fout << x.cols() << '\n'; // number of vectors kernel
-    for (size_t col_ker = 0; col_ker < (size_t)x.cols(); col_ker++) {
-        std::cout << "*******-" << col_ker << "-*****************" << '\n';
-        for(size_t i = 0, k = 0; i < 3; i++) {
-            for(size_t j = 0; j < 3; j++, k++) {
-                EssentMtrx(j, i) = x.col(col_ker)(k);
-            }
-        }
+    fout << ker.cols() << '\n'; // number of vectors kernel
 
-        fout << EssentMtrx << "\n\n";
-        std::cout << "The solution is:\n" << EssentMtrx << std::endl;
-
+    for (size_t i = 0; i < (size_t)ker.cols(); i++) {
+        std::cout << "*******-" << i << "-*****************" << '\n';
+        calculate_Ess_matrix(ker.col(i));
         // раскладываем полученную EssentMtrx с помощью SVD на UVS  и находим R и t_x
         calc_UV_S__R_t_x();
 
-        // std::cout << A*x.col(0) << '\n'
+        std::cout << "The solution is:\n" << EssentMtrx << std::endl;
+        // fout << EssentMtrx << "\n\n";
     }
-    fout.close();
+    // fout.close();
 
 }
 

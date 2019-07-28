@@ -5,8 +5,7 @@ import json
 from scipy.linalg import null_space
 # from scipy.linalg import
 
-txt_data = '../input_data/smpldata.txt'
-json_data = 'data_coord.json'
+txt_data = '../input_data/features.txt'
 
 
 file1 = open(txt_data,"r")

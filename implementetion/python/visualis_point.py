@@ -96,6 +96,9 @@ draw_cam_axis(cam_2_def[0], cam_2_def[1]+cam_2_def[0], cam_2_def[2]+cam_2_def[0]
 features_in_cam  = read_features_in_coord_cam()
 global_coords = read_global_features()
 
+print('checing cam 1 : ', np.dot(cam_1_def[1], cam_1_def[2]))
+print('checing cam 2: ', np.dot(cam_2_def[1], cam_2_def[2]))
+
 # print(global_coords)
 # print(features_in_cam[0])
 # print(features_in_cam[1])

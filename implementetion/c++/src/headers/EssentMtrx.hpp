@@ -11,6 +11,10 @@
 #include <eigen3/Eigen/SparseLU> //метод факторизации (LU - разложение),
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/SVD>
+#include <eigen3/Eigen/Eigenvalues>
+
+
 #include "Camera.hpp"
 
 /*
@@ -48,25 +52,27 @@ class EsssentialMatrix {
 	Camera* camera_1;
 	Camera* camera_2;
 
+	Eigen::VectorXd SVD_decompose();
+	void calc_UV_S__R_t_x();
+	Eigen::MatrixXd get_Ae_matrix();
+	Eigen::MatrixXd get_kernel_Ae_matrix();
+
 public:
 	Eigen::MatrixXd read_features(std::string path);
 
 	void tranform_features_into_coord_cam();
-
 	void get_homogenues_coordinate();
 
-	double* calc_polynom(double x[3], double _x[3]);
-
-	void calc_UV_S__R_t_x();
-
-	void calculateMatrix(/* arguments */);
+	void calculate_from_svd();
+	void calculate_from_ker();
 
 	void simpleRead(std::string path);
 
 	void printRead();
 
-	double* get_standart_polynom(double a[3], double b[3]);
-	void get_Ae_Matrix();
+
+
+	void calculate_Ess_matrix(Eigen::VectorXd v);
 };
 
 #endif //EssentMtrx

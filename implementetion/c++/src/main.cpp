@@ -20,7 +20,8 @@ int main(int argc, char const *argv[]) {
 	Ess.simpleRead(path);
 	// Ess.printRead();
 	// вычисляем E и раскладываем на R и t_x
-	Ess.calculateMatrix();
+	// Ess.calculate_from_svd();
+	Ess.calculate_from_ker();
 
 
 
