@@ -120,10 +120,24 @@ Eigen::MatrixXd EsssentialMatrix::get_kernel_Ae_matrix(){
     //           << std::endl;
     // return lu_decomp.kernel();
 
-    Eigen::EigenSolver<Eigen::MatrixXd> es(get_Ae_matrix());
-    std::cout << "The first eigenvectors:"
-         << std::endl << es.eigenvectors().real() << std::endl;
-    return es.eigenvectors().real();
+    // Eigen::EigenSolver<Eigen::MatrixXd> es(get_Ae_matrix());
+    // std::cout << "The first eigenvectors:"
+    //      << std::endl << es.eigenvectors().real() << std::endl;
+    // return es.eigenvectors().real();
+    Eigen::MatrixXd matr = get_Ae_matrix();
+    Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cod(matr);
+    cod.compute(matr);
+    std::cout << "rank : " << cod.rank() << "\n";
+    // Find URV^T
+    Eigen::MatrixXd V = cod.matrixZ().transpose();
+    Eigen::MatrixXd Null_space = V.block(0, cod.rank(),V.rows(), V.cols() - cod.rank());
+    std::cout << "The null space: \n" << Null_space << "\n" ;
+
+    Eigen::MatrixXd P = cod.colsPermutation();
+    Null_space = P * Null_space; // Unpermute the columns
+    // The Null space:
+    std::cout << "The null space: \n" << Null_space << "\n" ;
+    return Null_space;
 }
 
 Eigen::VectorXd EsssentialMatrix::SVD_decompose() {

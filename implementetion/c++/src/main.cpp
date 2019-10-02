@@ -21,6 +21,7 @@ int main(int argc, char const *argv[]) {
 	// Ess.printRead();
 	// вычисляем E и раскладываем на R и t_x
 	// Ess.calculate_from_svd();
+
 	Ess.calculate_from_ker();
 
 
