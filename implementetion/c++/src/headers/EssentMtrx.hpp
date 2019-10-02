@@ -8,11 +8,11 @@
 #include <utility>
 #include <string>
 
-#include <eigen3/Eigen/SparseLU> //метод факторизации (LU - разложение),
+#include <Eigen/SparseLU> //метод факторизации (LU - разложение),
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/SVD>
-#include <eigen3/Eigen/Eigenvalues>
+#include <Eigen/Dense>
+#include <Eigen/SVD>
+#include <Eigen/Eigenvalues>
 
 
 #include "Camera.hpp"

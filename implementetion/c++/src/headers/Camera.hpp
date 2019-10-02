@@ -1,7 +1,7 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
 #include <ostream>
