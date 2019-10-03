@@ -35,9 +35,11 @@ void Camera::get_homogen_coord() {
         Eigen::Vector3d el = this->features.col(i);
         this->features.col(i) = Eigen::Vector3d(el[0]/el[2], el[2]/el[2], el[1]/el[2]);
         /*
-        // geting global position coordinates points in camera Coordinate.
-        */
-        // this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], el[1]/el[2], el[2]/el[2])) + cam_pose;
+         *    geting global position coordinates points in camera Coordinate.
+         */
+        
+        // this->features.col(i) = transf_m*(Eigen::Vector3d(el[0]/el[2], 
+        //                                      el[1]/el[2], el[2]/el[2])) + cam_pose;
 
     }
 }
@@ -46,9 +48,9 @@ void Camera::transform_featutes() {
     this->vertical << this->horizon.cross(this->normal); // == x * n
 
     // normalisation of coordinates
-    this->normal    = this->normal.normalized(); // y
-    this->horizon   = this->horizon.normalized(); // x
-    this->vertical   = this->vertical.normalized(); //z
+    this->normal   = this->normal.normalized();     // y
+    this->horizon  = this->horizon.normalized();    // x
+    this->vertical = this->vertical.normalized();   //z
 
     std::cout << "n = " << this->normal.transpose() << "\nh = "
               << this->horizon.transpose()
