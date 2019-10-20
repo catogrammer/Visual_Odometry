@@ -1,3 +1,0 @@
-/home/akuma/Visual_Odometry/implementetion/c++/test_libs_func/CMakeFiles/edit_cache.dir
-/home/akuma/Visual_Odometry/implementetion/c++/test_libs_func/CMakeFiles/rebuild_cache.dir
-/home/akuma/Visual_Odometry/implementetion/c++/test_libs_func/CMakeFiles/Feat_Detect.dir

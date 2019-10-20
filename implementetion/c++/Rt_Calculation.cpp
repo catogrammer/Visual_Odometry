@@ -12,9 +12,9 @@ int main(int argc, char const *argv[]) {
 	Camera* camera_1 = new Camera();
 	Camera* camera_2 = new Camera();
 
-	camera_1->read_property_cam("../input_data/def_cam_1_data.txt");
-	camera_2->read_property_cam("../input_data/def_cam_2_data.txt");
-	Eigen::MatrixXd orig_features = Ess.read_features("../input_data/global_coords.txt");
+	camera_1->read_property_cam("../../input_data/def_cam_1_data.txt");
+	camera_2->read_property_cam("../../input_data/def_cam_2_data.txt");
+	Eigen::MatrixXd orig_features = Ess.read_features("../../input_data/global_coords.txt");
 
 	Ess.tranform_features_into_coord_cam(orig_features, camera_1, camera_2);
 	/* получаем однородные координаты из глобальных для камеры 1 и 2
@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]) {
 	 */
 
 	Ess.get_homogenues_coordinate();
-	Ess.simpleRead("../input_data/features.txt");
+	Ess.simpleRead("../../input_data/features.txt");
 	// Ess.printRead();
 
 	// вычисляем E и раскладываем на R и t_x

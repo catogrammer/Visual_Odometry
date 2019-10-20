@@ -1,6 +1,0 @@
-cmake_minimum_required(VERSION 2.8)
-project( Feat_Detect )
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
-add_executable( Feat_Detect Features_Detect.cpp )
-target_link_libraries( Feat_Detect ${OpenCV_LIBS} )
