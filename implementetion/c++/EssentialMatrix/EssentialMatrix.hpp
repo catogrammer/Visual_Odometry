@@ -1,5 +1,5 @@
-#ifndef ESSENTMTRX_HPP
-#define ESSENTMTRX_HPP
+#ifndef ESSENTIALMATRIX_HPP
+#define ESSENTIALMATRIX_HPP
 
 #include <iostream>
 #include <fstream>
@@ -8,12 +8,12 @@
 #include <utility>
 #include <string>
 
-#include <Eigen/SparseLU> //метод факторизации (LU - разложение),
+#include <Eigen/SparseLU>
+//метод факторизации (LU - разложение),
 // где L-нижняя треугольная U-верхняя треугольная матрица [одна из разновидностей метода Гаусса]
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <Eigen/Eigenvalues>
-
 
 #include "Camera.hpp"
 
@@ -60,7 +60,9 @@ class EsssentialMatrix {
 public:
 	Eigen::MatrixXd read_features(std::string path);
 
-	void tranform_features_into_coord_cam();
+	void tranform_features_into_coord_cam(
+            	Eigen::MatrixXd features,
+                Camera* cam_1, Camera* cam_2);
 	void get_homogenues_coordinate();
 
 	void calculate_from_svd();

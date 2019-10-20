@@ -1,4 +1,4 @@
-#include "headers/EssentMtrx.hpp"
+#include "EssentialMatrix.hpp"
 
 Eigen::MatrixXd EsssentialMatrix::read_features(std::string path) {
     std::ifstream fin(path);
@@ -17,21 +17,22 @@ Eigen::MatrixXd EsssentialMatrix::read_features(std::string path) {
     return features;
 }
 
-void EsssentialMatrix::tranform_features_into_coord_cam() {
-    this->camera_1 = new Camera();
-    this->camera_2 = new Camera();
+void 
+EsssentialMatrix::tranform_features_into_coord_cam(
+                Eigen::MatrixXd features,
+                Camera* cam_1, Camera* cam_2)
+{
+    this->camera_1 = cam_1;
+    this->camera_2 = cam_2;
 
-    camera_1->read_property_cam("../input_data/def_cam_1_data.txt");
-    camera_2->read_property_cam("../input_data/def_cam_2_data.txt");
+    camera_1->features = features;
+    camera_2->features = features;
 
-    Eigen::MatrixXd orig_features = read_features("../input_data/global_coords.txt");
+    camera_1->is_local_features = true;
+    camera_2->is_local_features = true;
 
-    camera_1->features = orig_features;
-    camera_2->features = orig_features;
-
-    camera_1->transform_featutes();
-    camera_2->transform_featutes();
-
+    camera_1->transform_featutes_to_local_coord();
+    camera_2->transform_featutes_to_local_coord();
 }
 
 void EsssentialMatrix::get_homogenues_coordinate() {
@@ -42,10 +43,8 @@ void EsssentialMatrix::get_homogenues_coordinate() {
     std::cout << "*****************features - 2***********************" << '\n';
     std::cout << camera_2->features << '\n';
 
-
     camera_1->get_homogen_coord();
     camera_2->get_homogen_coord();
-
 
     std::string path = "../input_data/features.txt";
     std::ofstream fout(path, std::ofstream::out);
@@ -120,10 +119,24 @@ Eigen::MatrixXd EsssentialMatrix::get_kernel_Ae_matrix(){
     //           << std::endl;
     // return lu_decomp.kernel();
 
-    Eigen::EigenSolver<Eigen::MatrixXd> es(get_Ae_matrix());
-    std::cout << "The first eigenvectors:"
-         << std::endl << es.eigenvectors().real() << std::endl;
-    return es.eigenvectors().real();
+    // Eigen::EigenSolver<Eigen::MatrixXd> es(get_Ae_matrix());
+    // std::cout << "The first eigenvectors:"
+    //      << std::endl << es.eigenvectors().real() << std::endl;
+    // return es.eigenvectors().real();
+    Eigen::MatrixXd matr = get_Ae_matrix();
+    Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cod(matr);
+    cod.compute(matr);
+    std::cout << "rank : " << cod.rank() << "\n";
+    // Find URV^T
+    Eigen::MatrixXd V = cod.matrixZ().transpose();
+    Eigen::MatrixXd Null_space = V.block(0, cod.rank(),V.rows(), V.cols() - cod.rank());
+    std::cout << "The null space: \n" << Null_space << "\n" ;
+
+    Eigen::MatrixXd P = cod.colsPermutation();
+    Null_space = P * Null_space; // Unpermute the columns
+    // The Null space:
+    std::cout << "The null space: \n" << Null_space << "\n" ;
+    return Null_space;
 }
 
 Eigen::VectorXd EsssentialMatrix::SVD_decompose() {
