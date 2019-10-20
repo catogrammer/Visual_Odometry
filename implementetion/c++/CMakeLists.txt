@@ -12,8 +12,10 @@ endif()
 
 find_package( OpenCV REQUIRED )
 
-include_directories (${OpenCV_INCLUDE_DIRS})
-include_directories ("${CMAKE_CURRENT_SOURCE_DIR}/Camera", "${CMAKE_CURRENT_SOURCE_DIR}/EsstialMatrix")
+include_directories (${OpenCV_INCLUDE_DIRS}, 
+                     "${CMAKE_CURRENT_SOURCE_DIR}/Camera",
+                     "${CMAKE_CURRENT_SOURCE_DIR}/EsstialMatrix"
+                    )
 
 add_subdirectory (Camera)
 add_subdirectory (EssentialMatrix)
