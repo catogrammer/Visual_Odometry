@@ -32,6 +32,9 @@ int main( int argc, char** argv )
   detector->detect( img_1, keypoints_1 );
   detector->detect( img_2, keypoints_2 );
 
+  std::cout << "size of vector_1 = " << keypoints_1.size() << std::endl;
+  std::cout << "size of vector_2 = " << keypoints_2.size() << std::endl;
+
   //-- Draw keypoints
   Mat img_keypoints_1; Mat img_keypoints_2;
 

@@ -25,7 +25,7 @@ public:
 
     void transform_featutes_to_local_coord(); //to local coord
 
-    void transform_featutes_to_global_coord(); //to local coord
+    void transform_featutes_to_global_coord(); //to global coord
 
 };
 
