@@ -19,16 +19,20 @@ using namespace cv::xfeatures2d;
 
 // template <class Detector, class Descriptor, class Matcher>
 class PointTracker {
-	std::vector<KeyPoint> keypoints_1, keypoints_2;
-	std::vector< std::vector<DMatch> > knn_matches;
-	std::vector<DMatch> good_matches;
-	Mat descriptors_1, descriptors_2;
-
 public:
+	std::vector<KeyPoint>				keypoints_1, keypoints_2;
+	std::vector< std::vector<DMatch> >	knn_matches;
+	std::vector<DMatch> 				good_matches;
+
+	Mat descriptors_1, descriptors_2;
+	Mat image_1, image_2;
+
+
+	PointTracker(Mat img_1, Mat img_2): image_1(img_1), image_2(img_2){}
 
 	void detect_features();
 	void match_features();
-	void get_matched_features();
+	// void get_matched_features();
 };
 
 // template <class Detector>
@@ -37,19 +41,19 @@ PointTracker::detect_features()
 {
 	Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(FastFeatureDetector::TYPE_9_16);
 
-	detector->detect(img_1, keypoints_1);
-	detector->detect(img_2, keypoints_2);
+	detector->detect(image_1, keypoints_1);
+	detector->detect(image_2, keypoints_2);
 }
 
 // template <class Descriptor, Matcher>
 void
-PointTracker::detect_features()
+PointTracker::match_features()
 {
 	Ptr<DAISY> computer = DAISY::create(DAISY::NRM_NONE);
 	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
-	computer->compute(img_1, keypoints_1, descriptors_1);
-	computer->compute(img_2, keypoints_2, descriptors_2);
+	computer->compute(image_1, keypoints_1, descriptors_1);
+	computer->compute(image_2, keypoints_2, descriptors_2);
 
 	matcher->knnMatch(descriptors_1, descriptors_2, knn_matches, 2);
 
@@ -65,15 +69,15 @@ PointTracker::detect_features()
 	}
 }
 
-void
-PointTracker::get_matched_features()
-{
-	// KeyPoints stroerd Point2f type
-	for (auto el : good_matches)
-	{
-		std::cout << keypoints_1[el.queryIdx].pt << " "
-				  << keypoints_2[el.trainIdx].pt << std::endl;
-	}
-}
+// void
+// PointTracker::get_matched_features()
+// {
+// 	// KeyPoints stroerd Point2f type
+// 	for (auto el : good_matches)
+// 	{
+// 		std::cout << keypoints_1[el.queryIdx].pt << " "
+// 				  << keypoints_2[el.trainIdx].pt << std::endl;
+// 	}
+// }
 
 #endif
