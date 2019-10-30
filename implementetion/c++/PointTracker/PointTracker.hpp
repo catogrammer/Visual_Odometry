@@ -59,7 +59,7 @@ PointTracker::match_features()
 
 	// Filter matches using the Lowe's ratio test
 	const float ratio_thresh = 0.79f;
-	
+
 	for (size_t i = 0; i < knn_matches.size(); i++)
 	{
 		if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)

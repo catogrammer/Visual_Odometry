@@ -69,8 +69,7 @@ int main( int argc, char** argv )
 	tracker.detect_features();
 	tracker.match_features();
 	// tracker.visualise();
-
-
+	
 	//-- Draw matches
 	Mat img_matches;
 	drawMatches( img_1, tracker.keypoints_1, img_2, tracker.keypoints_2, tracker.good_matches, img_matches, Scalar::all(-1),
