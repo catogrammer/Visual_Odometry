@@ -18,8 +18,10 @@ public:
 void
 StereoCourseTracker::track_course(const size_t count_images, DataReader reader){
     std::vector<KeyPoint> left_kps, right_kps;
+
     for (size_t i = 0; i < count_images; i++) {
         Mat curr_img_left, curr_img_right;
+        std::vector<Matx22f> tmp;
 
         reader.read_pair_image(curr_img_left, curr_img_right, i);
         StereoPointTracker tracker(curr_img_left, curr_img_right,
@@ -32,7 +34,7 @@ StereoCourseTracker::track_course(const size_t count_images, DataReader reader){
         left_kps  = tracker.kps_l;
         right_kps = tracker.kps_r;
         tracker.get_good_matches();
-        std::vector<Matx22f> tmp = tracker.get_good_coordinate();
+        tmp = tracker.get_good_coordinate();
         std::cout << "size of good_matches = " << tmp.size() << std::endl;
         this->key_points.push_back(tmp);
     }
