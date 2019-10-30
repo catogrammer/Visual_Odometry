@@ -20,6 +20,7 @@ int main( int argc, char** argv )
     Mat img_2 = imread( argv[2], IMREAD_GRAYSCALE );
     Mat img_3 = imread( argv[3], IMREAD_GRAYSCALE );
 
+    std::cout << "??" << argv[3] << std::endl;
     if( !img_1.data || !img_2.data ||  !img_3.data)
     { std::cout<< " --(!) Error reading images " << std::endl; return -1; }
 
