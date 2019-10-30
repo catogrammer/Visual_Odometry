@@ -9,19 +9,19 @@
 class StereoPointTracker : public PointTracker {
 private:
 public:
-	std::vector<KeyPoint>				keypoints_l, keypoints_r;
+	std::vector<KeyPoint>				kps_l, kps_r;
 	std::vector<std::vector<DMatch>>	knn_matches;
 	std::vector<DMatch> 				good_matches;
 
 	Mat descriptors_l, descriptors_r;
 	Mat image_l, image_r;
 
-	StereoPointTracker(Mat image_l, Mat image_r): PointTracker(), image_l(image_l), image_r(image_r){}
+	StereoPointTracker(Mat image_l, Mat image_r, std::vector<KeyPoint> kps_l, std::vector<KeyPoint> kps_r): PointTracker(), image_l(image_l), image_r(image_r), kps_l(kps_l), kps_r(kps_r){}
 
 	void detect_features();
 	void match_features();
 	void get_good_matches();
-	void get_good_coordinate_in_global();
+	std::vector<Matx22f> get_good_coordinate();
 	// void get_points_position();
 };
 
@@ -30,8 +30,8 @@ void
 StereoPointTracker::detect_features(){
 	Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(FastFeatureDetector::TYPE_9_16);
 
-	detector->detect(image_l, keypoints_l);
-	detector->detect(image_r, keypoints_r);
+	detector->detect(image_l, kps_l);
+	detector->detect(image_r, kps_r);
 }
 
 // template <class Descriptor, Matcher>
@@ -40,16 +40,15 @@ StereoPointTracker::match_features(){
 	Ptr<DAISY> computer = DAISY::create(DAISY::NRM_NONE);
 	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
-	computer->compute(image_l, keypoints_l, descriptors_l);
-	computer->compute(image_r, keypoints_r, descriptors_r);
-
+	computer->compute(image_l, kps_l, descriptors_l);
+	computer->compute(image_r, kps_r, descriptors_r);
 	matcher->knnMatch(descriptors_l, descriptors_r, knn_matches, 2);
 }
 
 void
 StereoPointTracker::get_good_matches(){
 	// Filter matches using the Lowe's ratio test
-	const float ratio_thresh = 0.61f;
+	const float ratio_thresh = 0.79f;
 	for (size_t i = 0; i < knn_matches.size(); i++){
 		if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance){
 			good_matches.push_back(knn_matches[i][0]);
@@ -70,16 +69,17 @@ StereoPointTracker::get_good_matches(){
 //     return across_point;
 // }
 
-void
-StereoPointTracker::get_good_coordinate_in_global(){
+std::vector<Matx22f>
+StereoPointTracker::get_good_coordinate(){
+	std::vector<Matx22f> key_points;
 	for (auto el : good_matches){
-		Point2f l_point = keypoints_l[el.queryIdx].pt;
-		Point2f r_point = keypoints_r[el.trainIdx].pt;
-
-		// StereoCamera cam;
-		// cam.read_property();
-
+		Point2f l_point = kps_l[el.queryIdx].pt;
+		Point2f r_point = kps_r[el.trainIdx].pt;
+		Matx22f tmp(l_point.x, l_point.y,
+					r_point.x, r_point.y);
+		key_points.push_back(tmp);
 	}
+	return key_points;
 }
 
 // void

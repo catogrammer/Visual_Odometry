@@ -10,7 +10,7 @@ using namespace cv;
 class CourseTracker {
 private:
 public:
-    std::vector<std::vector<Point3f>>	key_points;
+    std::vector<std::vector<Matx22f>> key_points;
 
     CourseTracker(){}
     virtual ~CourseTracker(){}

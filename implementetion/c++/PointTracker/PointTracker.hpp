@@ -21,6 +21,7 @@ public:
 
 	virtual void detect_features() = 0;
 	virtual void match_features() = 0;
+	// virtual void match_features(std::vector<KeyPoint> kp_l, std::vector<KeyPoint> kp_r) = 0;
 	// virtual void get_points_position() = 0;
 };
 
