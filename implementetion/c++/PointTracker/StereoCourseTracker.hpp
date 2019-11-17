@@ -8,7 +8,10 @@
 
 class StereoCourseTracker : protected CourseTracker {
 private:
+
 public:
+    std::vector<Point2f> key_points;
+
     StereoCourseTracker() : CourseTracker(){}
     ~StereoCourseTracker(){}
 
@@ -16,27 +19,41 @@ public:
 };
 
 void
-StereoCourseTracker::track_course(const size_t count_images, DataReader reader){
-    std::vector<KeyPoint> left_kps, right_kps;
+StereoCourseTracker::track_course(const size_t count_images, DataReader reader)
+{
+    std::vector<KeyPoint> curr_left_kps, curr_right_kps;
 
     for (size_t i = 0; i < count_images; i++) {
         Mat curr_img_left, curr_img_right;
-        std::vector<Matx22f> tmp;
 
         reader.read_pair_image(curr_img_left, curr_img_right, i);
         StereoPointTracker tracker(curr_img_left, curr_img_right,
-        left_kps, right_kps);
+                                   curr_left_kps, curr_right_kps);
+
         if (i == 0)
             tracker.detect_features();
+
         tracker.match_features();
-        left_kps.clear();
-        right_kps.clear();
-        left_kps  = tracker.kps_l;
-        right_kps = tracker.kps_r;
         tracker.get_good_matches();
-        tmp = tracker.get_good_coordinate();
-        std::cout << "size of good_matches = " << tmp.size() << std::endl;
-        this->key_points.push_back(tmp);
+
+        // std::vector<Matx22f> tmp_kps = tracker.get_good_coordinate();
+
+        // key_points.push_back(tracker.get_result_point_positions());
+        Point3f l_cam_p(-0.27, 0, 1);
+        Point3f r_cam_p(0.27, 0, 1);
+        std::vector<Point3f> tmp = tracker.get_result_point_positions(l_cam_p, r_cam_p);
+        for (auto el : tmp)
+        {
+            std::cout << '[' << el.x << ',' << el.y << ' ' << el.z << ']' << std::endl;
+        }
+	    std::cout << "size features = " << tmp.size() << std::endl;
+        //save detected features
+        curr_left_kps.clear();
+        curr_right_kps.clear();
+        curr_left_kps  = tracker.kps_l;
+        curr_right_kps = tracker.kps_r;
+        //save DMatch vector
+
     }
 }
 

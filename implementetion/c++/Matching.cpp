@@ -25,6 +25,6 @@ int main( int argc, char** argv )
 	StereoCourseTracker tracker;
 	DataReader reader("../../input_data/");
 	tracker.track_course(2, reader);
-
+	
 	return 0;
 }
