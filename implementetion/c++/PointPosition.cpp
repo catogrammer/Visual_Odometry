@@ -19,7 +19,7 @@ int main(int argc, char const *argv[])
 {
     Camera cam_1;
     Camera cam_2;
-    
+
     cam_1.read_property_cam("../../input_data/point_pos/def_cam_1_data.txt");
     cam_2.read_property_cam("../../input_data/point_pos/def_cam_2_data.txt");
 

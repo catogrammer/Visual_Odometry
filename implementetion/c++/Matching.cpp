@@ -23,8 +23,8 @@ using namespace cv::xfeatures2d;
 int main( int argc, char** argv )
 {
 	StereoCourseTracker tracker;
-	DataReader reader("../../input_data/");
-	tracker.track_course(2, reader);
+	DataReader reader("../../input_data/2011_09_26_drive_0013_sync/");
+	tracker.track_course(3, reader);
 	
 	return 0;
 }
