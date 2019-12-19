@@ -7,6 +7,7 @@
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgcodecs.hpp"
+#include "opencv2/calib3d.hpp"
 
 #include "PointTracker/StereoCourseTracker.hpp"
 #include "PointTracker/DataReader.hpp"
@@ -24,7 +25,8 @@ int main( int argc, char** argv )
 {
 	StereoCourseTracker tracker;
 	DataReader reader("../../input_data/2011_09_26_drive_0013_sync/");
-	tracker.track_course(3, reader);
+	// DataReader reader("../../input_data/");
+	tracker.track_course(5, reader);
 	
 	return 0;
 }

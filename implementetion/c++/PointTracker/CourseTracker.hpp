@@ -2,8 +2,8 @@
 #define COURSETRACKER_HPP
 
 #include "opencv2/core.hpp"
-#include "string"
 #include "DataReader.hpp"
+#include <string>
 
 using namespace cv;
 

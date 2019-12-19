@@ -3,7 +3,7 @@
 
 #include "PointTracker.hpp"
 
-#define RATIO_THRESH 0.60f
+#define RATIO_THRESH 0.80f
 
 // template <class Detector, class Descriptor, class Matcher>
 class StereoPointTracker : public PointTracker {
@@ -24,18 +24,6 @@ public:
 		:	PointTracker(),
 			image_l(image_l),
 			image_r(image_r){}
-
-	// StereoPointTracker(Mat image_l,
-	// 					Mat image_r,
-	// 					std::vector<KeyPoint> kps_l,
-	// 					std::vector<KeyPoint> kps_r)
-	// 	:
-	// 		PointTracker(), 
-	// 		image_l(image_l),
-	// 		image_r(image_r),
-	// 		kps_l(kps_l),
-	// 		kps_r(kps_r) {}
-
 
 	void detect_features();
 	void match_features();
