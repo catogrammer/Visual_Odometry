@@ -1,9 +1,14 @@
 #ifndef STEREOCOURSETRACKER_HPP
 #define STEREOCOURSETRACKER_HPP
 
+#include <utility>
+
 #include "CourseTracker.hpp"
 #include "StereoPointTracker.hpp"
-#include <utility>
+
+#include "opencv2/calib3d.hpp"
+// #include "opencv2/core.hpp"
+
 
 class StereoCourseTracker : protected CourseTracker {
 private:
@@ -114,22 +119,6 @@ draw_matches(Mat img_1, std::vector<KeyPoint> kps_1,
 	imshow("Good Matches", img_matches );
 	waitKey();
 }
-
-
-// cv::Point3f
-// get_point_position(Point3f point_curr_l, Point3f point_next_l,
-//            Point3f point_curr_r, Point3f point_next_r)
-// {
-//     cv::Point3f across_point;
-
-//     cv::Point3f p_a = point_next_l - point_curr_l;
-//     cv::Point3f p_b = point_next_r - point_curr_r;
-//     double t = (point_curr_r.x - point_curr_l.x)/(p_a.x - p_b.x);
-
-//     across_point = p_a*t + point_curr_l;
-
-//     return across_point;
-// }
 
 cv::Point3f
 get_point_position(cv::Mat c_n_left_p, cv::Mat c_n_right_p)

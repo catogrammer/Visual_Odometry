@@ -3,6 +3,9 @@
 
 #include "PointTracker.hpp"
 
+// #include "opencv2/core.hpp"
+
+
 #define RATIO_THRESH 0.80f
 
 // template <class Detector, class Descriptor, class Matcher>
@@ -28,9 +31,9 @@ public:
 	void detect_features();
 	void match_features();
 	void get_good_matches();
-	std::vector<Matx22f> get_good_coordinate();
-	std::vector<Point3f> get_result_point_positions(Point3f l_cam_p,
-													Point3f r_cam_p);
+	// std::vector<Matx22f> get_good_coordinate();
+	// std::vector<Point3f> get_result_point_positions(Point3f l_cam_p,
+	// 												Point3f r_cam_p);
 	void get_matched_features();
 	static std::vector<DMatch> match__features(Mat image_1,
 											Mat image_2,
@@ -106,76 +109,76 @@ StereoPointTracker::get_good_matches()
 	}
 }
 
-/**
- *
- * @param l_cam_p		Left cam position
- * @param r_cam_p		Right cam position
- * @param key_point		Vector of keypoints,
- 						which stored matrix with
-						coordinate features of left
-						and right images
- */
-std::vector<Point3f>
-StereoPointTracker::get_result_point_positions(Point3f l_cam_p,
-											   Point3f r_cam_p)
-{
-	std::vector<Matx22f> key_points = get_good_coordinate();
-	std::vector<Point3f> result;
+// /**
+//  *
+//  * @param l_cam_p		Left cam position
+//  * @param r_cam_p		Right cam position
+//  * @param key_point		Vector of keypoints,
+//  						which stored matrix with
+// 						coordinate features of left
+// 						and right images
+//  */
+// std::vector<Point3f>
+// StereoPointTracker::get_result_point_positions(Point3f l_cam_p,
+// 											   Point3f r_cam_p)
+// {
+// 	std::vector<Matx22f> key_points = get_good_coordinate();
+// 	std::vector<Point3f> result;
 
-	for (auto el : key_points)
-	{
-		float t = 0;
-		Point3f across_point;
-		Point3f p_left  = Point3f(el(0,0), el(0,1), 1) - l_cam_p;
-		Point3f p_right = Point3f(el(1,0), el(1,1), 1) - r_cam_p;
+// 	for (auto el : key_points)
+// 	{
+// 		float t = 0;
+// 		Point3f across_point;
+// 		Point3f p_left  = Point3f(el(0,0), el(0,1), 1) - l_cam_p;
+// 		Point3f p_right = Point3f(el(1,0), el(1,1), 1) - r_cam_p;
 
-		t = (r_cam_p.x - l_cam_p.x)/(p_left.x - p_right.x);
-		across_point = p_left*t + l_cam_p;
-		result.push_back(across_point);
-	}
-	return result;
-}
+// 		t = (r_cam_p.x - l_cam_p.x)/(p_left.x - p_right.x);
+// 		across_point = p_left*t + l_cam_p;
+// 		result.push_back(across_point);
+// 	}
+// 	return result;
+// }
 
-std::vector<Matx22f>
-StereoPointTracker::get_good_coordinate()
-{
-	std::vector<Matx22f> key_points;
+// std::vector<Matx22f>
+// StereoPointTracker::get_good_coordinate()
+// {
+// 	std::vector<Matx22f> key_points;
 	
-	// std::cout << "left-right:" 
-	// 		  << good_matches[0].size() << std::endl;
-	// for (auto el : good_matches[0]){
+// 	// std::cout << "left-right:" 
+// 	// 		  << good_matches[0].size() << std::endl;
+// 	// for (auto el : good_matches[0]){
 		
-	// 	std::cout << '[' << 
-	// 				 el.queryIdx << ' ' << kps_l[el.queryIdx].pt <<
-	// 				 ']' << std::endl;
+// 	// 	std::cout << '[' << 
+// 	// 				 el.queryIdx << ' ' << kps_l[el.queryIdx].pt <<
+// 	// 				 ']' << std::endl;
 		
-	// 	// Point2f l_point = kps_l[el.queryIdx].pt;
-	// 	// Point2f r_point = kps_r[el.trainIdx].pt;
-	// 	// Matx22f tmp(l_point.x, l_point.y,
-	// 	// 			r_point.x, r_point.y);
-	// 	// key_points.push_back(tmp);
-	// }
-	// std::cout << "left-next_left: size = "
-	// 		  << good_matches[1].size() << std::endl;
+// 	// 	// Point2f l_point = kps_l[el.queryIdx].pt;
+// 	// 	// Point2f r_point = kps_r[el.trainIdx].pt;
+// 	// 	// Matx22f tmp(l_point.x, l_point.y,
+// 	// 	// 			r_point.x, r_point.y);
+// 	// 	// key_points.push_back(tmp);
+// 	// }
+// 	// std::cout << "left-next_left: size = "
+// 	// 		  << good_matches[1].size() << std::endl;
 
-	// // for (auto el : good_matches[1]){
-	// // 	if ()
-	// // }
+// 	// // for (auto el : good_matches[1]){
+// 	// // 	if ()
+// 	// // }
 
-	// for (auto el : good_matches[1]){
-	// 	std::cout << '[' << 
-	// 				 el.queryIdx << ' ' << next_kps_l[el.trainIdx].pt <<
-	// 				 ']' << std::endl;
+// 	// for (auto el : good_matches[1]){
+// 	// 	std::cout << '[' << 
+// 	// 				 el.queryIdx << ' ' << next_kps_l[el.trainIdx].pt <<
+// 	// 				 ']' << std::endl;
 
-	// 	// Point2f l_point = kps_l[el.queryIdx].pt;
-	// 	// Point2f r_point = kps_r[el.trainIdx].pt;
-	// 	// Matx22f tmp(l_point.x, l_point.y,
-	// 	// 			r_point.x, r_point.y);
-	// 	// key_points.push_back(tmp);
-	// }
+// 	// 	// Point2f l_point = kps_l[el.queryIdx].pt;
+// 	// 	// Point2f r_point = kps_r[el.trainIdx].pt;
+// 	// 	// Matx22f tmp(l_point.x, l_point.y,
+// 	// 	// 			r_point.x, r_point.y);
+// 	// 	// key_points.push_back(tmp);
+// 	// }
 
-	return key_points;
-}
+// 	return key_points;
+// }
 
 void
 StereoPointTracker::get_matched_features()
