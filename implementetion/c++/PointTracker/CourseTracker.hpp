@@ -2,7 +2,7 @@
 #define COURSETRACKER_HPP
 
 #include "opencv2/core.hpp"
-#include "DataReader.hpp"
+#include "ImageReader.hpp"
 #include <string>
 
 using namespace cv;
@@ -15,7 +15,7 @@ public:
     CourseTracker(){}
     virtual ~CourseTracker(){}
 
-    virtual void track_course(const size_t count_images, DataReader reader) = 0;
+    virtual void track_course(const size_t count_images, ImageReader reader) = 0;
 };
 
 #endif

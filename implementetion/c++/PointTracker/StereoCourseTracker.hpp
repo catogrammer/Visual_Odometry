@@ -23,7 +23,7 @@ public:
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
 
-	void track_course(const size_t count_images, DataReader reader);
+	void track_course(const size_t count_images, ImageReader reader);
 	std::vector<Mat> get_indexies();
 	void print_paired_keypoints(std::vector<Mat> vec, size_t i);
 	std::vector<Point3f> get_result_points(std::vector<Mat> vec, size_t i);
@@ -193,7 +193,7 @@ StereoCourseTracker::get_result_points(std::vector<Mat> vec, size_t i)
 
 
 void
-StereoCourseTracker::track_course(const size_t count_images, DataReader reader)
+StereoCourseTracker::track_course(const size_t count_images, ImageReader reader)
 {
 	Mat prev_img_left, prev_img_right;
 	std::vector<DMatch> prev_l_r_match;
