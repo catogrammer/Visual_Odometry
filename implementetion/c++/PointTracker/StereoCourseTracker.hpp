@@ -6,8 +6,8 @@
 #include "CourseTracker.hpp"
 #include "StereoPointTracker.hpp"
 
+#include <opencv2/sfm/triangulation.hpp>
 #include "opencv2/calib3d.hpp"
-// #include "opencv2/core.hpp"
 
 
 class StereoCourseTracker : protected CourseTracker {
@@ -23,10 +23,13 @@ public:
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
 
-	void track_course(const size_t count_images, ImageReader reader);
-	std::vector<Mat> get_indexies();
+	void track_course(const size_t count_images,
+					  ImageReader reader, CalibReader calib_data);
+	std::vector<Mat> get_indexes();
+	std::vector<std::vector<cv::Point2f>> get_key_points_by_index(std::vector<cv::Mat> vec, size_t i);
 	void print_paired_keypoints(std::vector<Mat> vec, size_t i);
-	std::vector<Point3f> get_result_points(std::vector<Mat> vec, size_t i);
+	std::vector<cv::Mat> get_result_points(std::vector<Mat> indexes, size_t i,
+										   CalibReader calib_data);
 };
 
 void print_vector_dmatch(std::vector<std::vector<DMatch>> vec_dmatch) {
@@ -41,7 +44,7 @@ void print_vector_dmatch(std::vector<std::vector<DMatch>> vec_dmatch) {
 }
 
 std::vector<Mat>
-StereoCourseTracker::get_indexies()
+StereoCourseTracker::get_indexes()
 {
 	std::vector<Mat> result;
 
@@ -100,8 +103,8 @@ StereoCourseTracker::print_paired_keypoints(std::vector<Mat> vec, size_t i)
 				  << key_points[i - 1].second[el.at<int>(0,1)].pt << std::endl;
 		std::cout << key_points[i].first[el.at<int>(1,0)].pt << " "
 				  << key_points[i].second[el.at<int>(1,1)].pt << std::endl;
-		std::cout << "-------------" << std::endl;
 	}
+	std::cout << "------" << vec.size() << "-------" << std::endl;
 }
 
 void
@@ -120,80 +123,77 @@ draw_matches(Mat img_1, std::vector<KeyPoint> kps_1,
 	waitKey();
 }
 
-cv::Point3f
-get_point_position(cv::Mat c_n_left_p, cv::Mat c_n_right_p)
-{
-    cv::Point3f across_point;
+std::vector<std::vector<cv::Point2f>>
+StereoCourseTracker::get_key_points_by_index(std::vector<cv::Mat> vec, size_t i){
 
-    cv::Mat p_a = c_n_left_p.row(1) - c_n_left_p.row(0);
-    cv::Mat p_b = c_n_right_p.row(1) - c_n_right_p.row(0);
-    float t = (c_n_right_p.at<float>(0,0) - c_n_left_p.at<float>(0,0))/(p_a.at<float>(0) - p_b.at<float>(0));
-
-	cv::Mat tmp = p_a*t + c_n_left_p.row(0);
-    across_point = Point3f(tmp.at<float>(0), tmp.at<float>(1), tmp.at<float>(2));
-	
-    return across_point;
-}
-
-std::vector<Point3f>
-StereoCourseTracker::get_result_points(std::vector<Mat> vec, size_t i)
-{
-	std::vector<Point3f> result_points;
+	std::vector<std::vector<cv::Point2f>> mtrx_of_kps(4);
 
 	for (auto el : vec)
 	{
-		//transform to global coords.
-		cv::Mat new_c_n_left_p;
-		cv::Mat new_c_n_right_p;
-		cv::Mat left_cam_mtrx;
-		cv::Mat right_cam_mtrx;
-		cv::Mat dist;
+		Point2f curr_l_p = key_points[i - 1].first[el.at<int>(0,0)].pt;
+		Point2f curr_r_p = key_points[i - 1].first[el.at<int>(0,1)].pt;
+		Point2f next_l_p = key_points[i].first[el.at<int>(1,0)].pt;
+		Point2f next_r_p = key_points[i].first[el.at<int>(1,1)].pt;
 
-		std::vector<Point2f> c_n_left_p = {key_points[i - 1].first[el.at<int>(0,0)].pt,
-										   key_points[i].first[el.at<int>(1,0)].pt};
-		std::vector<Point2f> c_n_right_p = {key_points[i - 1].second[el.at<int>(0,1)].pt,
-											key_points[i].second[el.at<int>(1,1)].pt};
-
-		float cx = 0.54;
-		float cy = 0.0;
-		float fx = 1;
-		float fy = 1;
-
-		float l_data[] = {fx,  0,  0, 
-						  0, fy, cy, 
-						  0,  0,  1};
-
-		float r_data[] = {fx,  0, cx, 
-						  0, fy, cy, 
-						  0,  0,  1};
-
-		left_cam_mtrx = cv::Mat(3, 3, CV_32F, l_data);
-		right_cam_mtrx = cv::Mat(3, 3, CV_32F, r_data);
-		dist = cv::Mat::zeros(1, 5, CV_32F);
-		
-		undistortPoints(c_n_left_p, new_c_n_left_p, left_cam_mtrx, dist);
-		undistortPoints(c_n_right_p, new_c_n_right_p, right_cam_mtrx, dist);
-
-
-		std::cout << new_c_n_left_p  << std::endl
-				  << new_c_n_right_p << std::endl
-				//   << "-----------------" 
-				  << std::endl;
-		// // get coord result point
-		cv::Point3f result_p = get_point_position(new_c_n_left_p, new_c_n_right_p);
-		
-		std::cout << "Res point: " << result_p << std::endl
-				  << "-----------------" 
-				  << std::endl;
-		
-		result_points.push_back(result_p);
+		mtrx_of_kps[0].push_back(curr_l_p);
+		mtrx_of_kps[1].push_back(curr_r_p);
+		mtrx_of_kps[2].push_back(next_l_p);
+		mtrx_of_kps[3].push_back(next_r_p);
 	}
-	return result_points;
+	return mtrx_of_kps;
 }
 
+template<typename T>
+void print_vec(std::vector<T> vec){
+    for (auto &&i : vec)
+    {
+        std::cout << i << ' ';
+    }
+    std::cout << std::endl;
+}
+
+std::vector<cv::Mat>
+StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
+									   CalibReader calib_data)
+{
+	std::vector<cv::Mat> real_world_points(2);
+	cv::Mat curr_real_world_points;
+	cv::Mat next_real_world_points;
+	std::vector<cv::Mat> input_curr_p(2);
+	std::vector<cv::Mat> input_next_p(2);
+
+	std::vector<std::vector<cv::Point2f>> kps_by_index = get_key_points_by_index(indexes, i);
+
+	for (size_t i = 0; i < 2; i++){
+		for (size_t j = 0; j < 2; j++){
+			std::vector<cv::Point2f> tmp_ps = kps_by_index[i*2 + j];
+			cv::Mat ps = cv::Mat(tmp_ps).reshape(1,2);
+			if (i == 0)
+				input_curr_p[j].push_back(ps);
+			else
+				input_next_p[j].push_back(ps);
+		}
+	}
+	// undistortPoints(c_n_left_p, new_c_n_left_p, left_cam_mtrx, dist);
+	// undistortPoints(c_n_right_p, new_c_n_right_p, right_cam_mtrx, dist);
+
+	cv::Mat proj_m_l_cam = cv::Mat(calib_data.calib_cam_data[0].P_rect_xx(), true).reshape(1,3);
+	cv::Mat proj_m_r_cam = cv::Mat(calib_data.calib_cam_data[1].P_rect_xx(), true).reshape(1,3);
+	std::vector<cv::Mat> proj_m{proj_m_l_cam, proj_m_r_cam};
+
+	cv::sfm::triangulatePoints(input_curr_p, proj_m, curr_real_world_points);
+	cv::sfm::triangulatePoints(input_next_p, proj_m, next_real_world_points);
+
+	real_world_points.push_back(curr_real_world_points);
+	real_world_points.push_back(next_real_world_points);
+
+	return curr_real_world_points;
+}
 
 void
-StereoCourseTracker::track_course(const size_t count_images, ImageReader reader)
+StereoCourseTracker::track_course(const size_t count_images,
+								  ImageReader reader,
+								  CalibReader calib_data)
 {
 	Mat prev_img_left, prev_img_right;
 	std::vector<DMatch> prev_l_r_match;
@@ -210,7 +210,8 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader)
 		tracker.get_good_matches();
 
 		// std::cout << "Curr image left right:" << std::endl;
-		// draw_matches(curr_img_left, tracker.kps_l, curr_img_right, tracker.kps_r, tracker.good_matches);
+		// draw_matches(curr_img_left, tracker.kps_l, curr_img_right,
+		// 			 tracker.kps_r, tracker.good_matches);
 
 		key_points.push_back(std::make_pair(tracker.kps_l,tracker.kps_r));
 
@@ -228,7 +229,8 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader)
 			// 									tracker.kps_r);
 			good_matches.push_back(pleft_cleft_match);
 			// std::cout << "Curr image left  next image left:" << std::endl;
-			// draw_matches(prev_img_left, key_points[i-1].first, curr_img_left, tracker.kps_l, pleft_cleft_match);
+			// draw_matches(prev_img_left, key_points[i-1].first, curr_img_left,
+			// 				tracker.kps_l, pleft_cleft_match);
 		}
 		good_matches.push_back(tracker.good_matches);
 
@@ -237,10 +239,14 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader)
 
 		if (i > 0)
 		{
-			std::vector<Mat> tmp = get_indexies();
+			std::vector<Mat> tmp = get_indexes();
 
 			// print_paired_keypoints(tmp, i);
-			get_result_points(tmp, i);
+			std::cout << "resulted points for image " << i - 1 << std::endl;
+			std::vector<cv::Mat> res_p = get_result_points(tmp, i, calib_data);
+			
+			std::cout << "size of res_p: " << res_p.size << std::endl;
+
 
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}

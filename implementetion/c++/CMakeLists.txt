@@ -11,10 +11,12 @@ else()
 endif()
 
 find_package( OpenCV REQUIRED )
+find_package( Eigen3 3.0 REQUIRED )
 
 include_directories (${OpenCV_INCLUDE_DIRS} 
                      "${CMAKE_CURRENT_SOURCE_DIR}/Camera"
-                     "${CMAKE_CURRENT_SOURCE_DIR}/EsstialMatrix")
+                     "${CMAKE_CURRENT_SOURCE_DIR}/EsstialMatrix"
+                     ${EIGEN3_INCLUDE_DIRS})
 
 add_subdirectory (Camera)
 add_subdirectory (EssentialMatrix)
@@ -33,4 +35,4 @@ add_executable (PointPosition PointPosition.cpp)
 # target_link_libraries (Feat_Match ${OpenCV_LIBS})
 target_link_libraries (Matching ${OpenCV_LIBS})
 target_link_libraries (EssentialMatrix_Calculation ${ESSENTIAL_LIB} ${CAMERA_LIB})
-target_link_libraries (PointPosition ${CAMERA_LIB})
+target_link_libraries (PointPosition ${CAMERA_LIB} ${EIGEN3_LIBS} ${OpenCV_LIBS})

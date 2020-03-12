@@ -1,9 +1,11 @@
 #ifndef COURSETRACKER_HPP
 #define COURSETRACKER_HPP
 
+#include <string>
+
 #include "opencv2/core.hpp"
 #include "ImageReader.hpp"
-#include <string>
+#include "CalibReader.hpp"
 
 using namespace cv;
 
@@ -15,7 +17,8 @@ public:
     CourseTracker(){}
     virtual ~CourseTracker(){}
 
-    virtual void track_course(const size_t count_images, ImageReader reader) = 0;
+    virtual void track_course(const size_t count_images, ImageReader reader,
+                              CalibReader calib_data) = 0;
 };
 
 #endif

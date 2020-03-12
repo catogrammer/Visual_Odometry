@@ -1,62 +1,59 @@
-#include "Camera/Camera.hpp"
-#include <Eigen/Dense>
+#include "opencv2/core.hpp"
+#include <opencv2/sfm/triangulation.hpp>
 
-Eigen::Vector3d
-get_point_position(Eigen::Vector3d point_0_a, Eigen::Vector3d point_1_a,
-           Eigen::Vector3d point_0_b, Eigen::Vector3d point_1_b)
-{
-    Eigen::Vector3d across_point;
-    Eigen::Vector3d p_a = point_1_a - point_0_a;
-    Eigen::Vector3d p_b = point_1_b - point_0_b;
-    double t = (point_0_b[0] - point_0_a[0])/(p_a[0] - p_b[0]);
+#include <vector>
+#include <iostream>
 
-    across_point << p_a*t + point_0_a;
-    return across_point;
+template<typename T>
+void print_vec(std::vector<T> vec){
+    for (auto &&i : vec)
+    {
+        std::cout << i << ' ';
+    }
+    std::cout << std::endl;
 }
-
 
 int main(int argc, char const *argv[])
 {
-    Camera cam_1;
-    Camera cam_2;
+    std::vector<cv::Mat> in_p;
+    cv::Mat out_p;
 
-    cam_1.read_property_cam("../../input_data/point_pos/def_cam_1_data.txt");
-    cam_2.read_property_cam("../../input_data/point_pos/def_cam_2_data.txt");
-
-    std::cout << "cam prop:" << cam_1.normal << std::endl;
-
-    Eigen::Vector3d a;
-    Eigen::Vector3d b;
-    a << 5, 0.5, 0;
-    b << 5, -0.5, 0;
-    cam_1.features = a;
-    cam_2.features = b;
+    std::vector<cv::Point2d> tmp_1{cv::Point2d(100,200),
+                                   cv::Point2d(400,200),
+                                   cv::Point2d(600,200)};
+    std::vector<cv::Point2d> tmp_2{cv::Point2d(200,300),
+                                   cv::Point2d(500,300),
+                                   cv::Point2d(700,300)};
     
-    std::cout << "coord : " << cam_1.features.transpose() << std::endl;
-    std::cout << "coord : " << cam_2.features.transpose() << std::endl;
-
-    cam_1.transform_featutes_to_global_coord();
-    cam_2.transform_featutes_to_global_coord();
-
-    std::cout << "coord : " << cam_1.features.transpose() << std::endl;
-    std::cout << "coord : " << cam_2.features.transpose() << std::endl;
-
-    std::cout << "across point : "
-              << get_point_position(cam_1.cam_pose, cam_1.features.col(0),
-                                    cam_2.cam_pose, cam_2.features.col(0)) 
-              << std::endl;
-
-    // Eigen::MatrixXd line_a(2,3);
-    // Eigen::MatrixXd line_b(2,3);
-    // line_a << 0, 2, 1,
-    //           0, 1, 1;
-    // line_b << 2, 2, 1,
-    //           1, 1, 1;
+    cv::Mat points1Mat = cv::Mat(2, tmp_1.size(), CV_64F, tmp_1.data());
+    cv::Mat points2Mat = cv::Mat(2, tmp_2.size(), CV_64F, tmp_2.data());
     
-    // std::cout << "line a : " << line_a.row(0) << std::endl << line_a.row(1) << std::endl;
-    // std::cout << "across point : "
-    //           << get_point_position(line_a.row(0),line_a.row(1),
-    //                                 line_b.row(0), line_b.row(1)) 
-    //           << std::endl;
+    /*
+    P_rect_00: 7.215377e+02 0.000000e+00 6.095593e+02 0.000000e+00
+               0.000000e+00 7.215377e+02 1.728540e+02 0.000000e+00
+               0.000000e+00 0.000000e+00 1.000000e+00 0.000000e+00
+    */
+    // cv::Mat p_mat = (cv::Mat_<double>(3,4) << 400, 0,    610,  0,
+    //                                           0,   400,  170, 0,
+    //                                           0,   0,    1,    0);
+    std::vector<float> tmp{721.538, 0, 609.559, 0, 0, 721.538, 172.854, 0, 0, 0, 1, 0};
+    cv::Mat p_mat = cv::Mat(tmp, true);
+    p_mat = p_mat.reshape(1,3);
+
+    std::cout << p_mat << std::endl;
+    std::cout << p_mat.size << std::endl;
+
+    std::vector<cv::Mat> proj_mtrx{p_mat, p_mat};
+    
+    in_p.push_back(points1Mat);
+    in_p.push_back(points2Mat);
+    std::cout << points1Mat << std::endl;
+    std::cout << points2Mat << std::endl;
+
+    cv::sfm::triangulatePoints(in_p, proj_mtrx, out_p);
+
+    std::cout << out_p << std::endl;
+    // std::cout << out_p.size << std::endl;
+
     return 0;
 }
