@@ -21,11 +21,12 @@ public:
 
 cv::Mat
 StatisticalProcessing::prepare_data(){
-    /*
-        delete  outliers befor?
-    */
+    
+    // std::cout << data[0].size() << "=?=" << data[1].size() << std::endl;
     cv::absdiff(data[0], data[1], clear_data);
-    std::cout << "clear data :\n" << clear_data << std::endl;
+
+    // std::cout << "clear data :\n" << clear_data << std::endl;
+
     for (size_t i = 0; i < clear_data.cols; i++){
         cv::Scalar mean_;
         cv::Scalar stddev_;
@@ -43,8 +44,12 @@ StatisticalProcessing::prepare_data(){
     cv::subtract(this->mean, clear_data, clear_data);
     for (size_t i = 0; i < clear_data.rows; i++){
         if (clear_data.at<double>(i,0) < n_sigma * this->stddev[0] &&
+            // clear_data.at<double>(i,0) > 0 &&
             clear_data.at<double>(i,1) < n_sigma * this->stddev[1] &&
-            clear_data.at<double>(i,2) < n_sigma * this->stddev[2]){
+            // clear_data.at<double>(i,1) > 0 &&
+            clear_data.at<double>(i,2) < n_sigma * this->stddev[2] 
+            // && clear_data.at<double>(i,2) > 0
+            ){
                 res_points.push_back(clear_data.row(i));
             }
     }

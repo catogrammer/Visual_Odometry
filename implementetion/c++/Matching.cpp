@@ -18,7 +18,7 @@ int main( int argc, char** argv )
 	CalibReader calib_data;
 	calib_data.load_calib_data("/home/akuma/Downloads/Kitti_datasets"
 							   "/2011_09_26/calib_cam_to_cam.txt");
-	tracker.track_course(10, reader, calib_data);
+	tracker.track_course(5, reader, calib_data);
 
 	// std::cout << calib_r.calib_cam_data[1].S_rect_xx() << std::endl;
 	return 0;

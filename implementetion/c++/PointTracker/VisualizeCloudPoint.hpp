@@ -8,7 +8,6 @@ class VisualizeCloudPoint
 {
 private:
     cv::Mat cloud_poits;
-    cv::Point3DFrame point3DFrame;
 public:
     VisualizeCloudPoint(cv::Mat cp): cloud_poits(cp){};
     ~VisualizeCloudPoint();

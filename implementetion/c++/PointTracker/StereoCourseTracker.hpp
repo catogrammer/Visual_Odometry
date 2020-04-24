@@ -193,6 +193,25 @@ StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
 	return real_world_points;
 }
 
+std::vector<cv::Mat> remove_outliers(std::vector<cv::Mat> points){
+	std::vector<cv::Mat> res(2);
+	cv:Mat3d points_1, points_2;
+	for (size_t i = 0; i < points[0].cols; i++){
+		if (points[0].at<double>(0, i) > 0 &&
+			points[0].at<double>(1, i) > 0 &&
+			points[0].at<double>(2, i) > 0 &&
+			points[1].at<double>(0, i) > 0 &&
+			points[1].at<double>(1, i) > 0 &&
+			points[1].at<double>(2, i) > 0
+			)
+		{
+			res[0].push_back(points[0].col(i).t());
+			res[1].push_back(points[1].col(i).t());
+		}
+	}
+	return res;
+}
+
 void
 StereoCourseTracker::track_course(const size_t count_images,
 								  ImageReader reader,
@@ -247,10 +266,19 @@ StereoCourseTracker::track_course(const size_t count_images,
 			// print_paired_keypoints(tmp, i);
 			std::cout << "resulted points for image " << i - 1 << std::endl;
 			std::vector<cv::Mat> res_p = get_result_points(tmp, i, calib_data);
-			StatisticalProcessing st_p(res_p);
-			cv::Mat ffffff = st_p.prepare_data();
 
-			std::cout << "fff: \n" << ffffff << std::endl;
+			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
+			StatisticalProcessing st_p(without_outliers);
+
+			std::cout << "result data: \n" << without_outliers[0] << std::endl;
+
+			cv::Mat clear_d = st_p.prepare_data();
+			
+			/* Satistic data */
+			// if (!clear_d.empty())
+			// 	std::cout << "result data: \n" << clear_d.t() << std::endl;
+
+			std::cout << "ends of point" << std::endl;
 
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}
