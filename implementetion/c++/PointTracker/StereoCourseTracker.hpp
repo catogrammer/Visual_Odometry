@@ -8,6 +8,7 @@
 
 #include <opencv2/sfm/triangulation.hpp>
 #include "opencv2/calib3d.hpp"
+#include "StatisticalProcessing.hpp"
 
 
 class StereoCourseTracker : protected CourseTracker {
@@ -156,7 +157,7 @@ std::vector<cv::Mat>
 StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
 									   CalibReader calib_data)
 {
-	std::vector<cv::Mat> real_world_points(2);
+	std::vector<cv::Mat> real_world_points;
 	cv::Mat curr_real_world_points;
 	cv::Mat next_real_world_points;
 	std::vector<cv::Mat> input_curr_p(2);
@@ -187,7 +188,9 @@ StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
 	real_world_points.push_back(curr_real_world_points);
 	real_world_points.push_back(next_real_world_points);
 
-	return curr_real_world_points;
+	// std::cout << "DSLKFJL:"  << next_real_world_points << std::endl;
+
+	return real_world_points;
 }
 
 void
@@ -244,9 +247,10 @@ StereoCourseTracker::track_course(const size_t count_images,
 			// print_paired_keypoints(tmp, i);
 			std::cout << "resulted points for image " << i - 1 << std::endl;
 			std::vector<cv::Mat> res_p = get_result_points(tmp, i, calib_data);
-			
-			std::cout << "size of res_p: " << res_p.size << std::endl;
+			StatisticalProcessing st_p(res_p);
+			cv::Mat ffffff = st_p.prepare_data();
 
+			std::cout << "fff: \n" << ffffff << std::endl;
 
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}
