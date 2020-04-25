@@ -12,13 +12,12 @@ int main()
     myWindow.showWidget("Coordinate", cv::viz::WCoordinateSystem());
 
 	// Add cloud widget
-	// float arr[] = {.1, .3, .1, .5, .3, .8, .6, .2, .9, };
+
 	size_t n = 9;
 	float *arr = new float[n];
 	for (int i=0; i<n; i++) {
 		arr[i] = (i+1.0)/10;
 	}
-
 	cv::Mat cloudMat = cv::Mat(1, 3, CV_32FC3, arr);
 	std::cout << cloudMat << std::endl;
 	cv::viz::WCloud cloud_widget(cloudMat, cv::viz::Color::white());

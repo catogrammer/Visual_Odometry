@@ -3,7 +3,7 @@
 
 #include "PointTracker.hpp"
 
-#define RATIO_THRESH 0.67f
+#define RATIO_THRESH 0.73f
 
 // template <class Detector, class Descriptor, class Matcher>
 class StereoPointTracker : public PointTracker {
@@ -53,11 +53,11 @@ StereoPointTracker::match_features(){
 	computer->compute(image_l, kps_l, descriptors_l);
 	computer->compute(image_r, kps_r, descriptors_r);
 
-	if(descriptors_l.type()!=CV_32F) {
+	if(descriptors_l.type()!= CV_32F) {
     	descriptors_l.convertTo(descriptors_l, CV_32F);
 	}
 
-	if(descriptors_r.type()!=CV_32F) {
+	if(descriptors_r.type()!= CV_32F) {
 		descriptors_r.convertTo(descriptors_r, CV_32F);
 	}
 

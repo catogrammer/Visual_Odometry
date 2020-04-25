@@ -10,6 +10,7 @@
 #include "opencv2/calib3d.hpp"
 #include "StatisticalProcessing.hpp"
 
+#define DEBUG_LOG_ENABLE
 
 class StereoCourseTracker : protected CourseTracker {
 private:
@@ -18,6 +19,7 @@ public:
 	std::vector<std::pair<std::vector<KeyPoint>, std::vector<KeyPoint>>> 
 		key_points;
 	std::vector<std::vector<DMatch>> good_matches;
+	std::vector<std::pair<cv::Mat, cv::Mat>> tracked_points;
 
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
@@ -198,7 +200,7 @@ remove_outliers(std::vector<cv::Mat> points)
 {
 	std::vector<cv::Mat> res(2);
 	cv:Mat3d points_1, points_2;
-	float eps = -10.0;
+	float eps = -7.0;
 
 	for (size_t i = 0; i < points[0].cols; i++){
 		if (points[0].at<double>(0, i) > eps &&
@@ -259,21 +261,32 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		}
 		good_matches.push_back(tracker.good_matches);
 
+	#ifdef DEBUG_LOG_ENABLE
 		std::cout << "size good match = " << good_matches.size() << std::endl;
 		std::cout << "size key_points = " << key_points.size() << std::endl;
+	#endif
 
 		if (i > 0)
 		{
 			std::vector<Mat> tmp = match_paired_points();
 
+		#ifdef DEBUG_LOG_ENABLE
 			// print_paired_keypoints(tmp, i);
+		#endif
+		
 			std::cout << "resulted points for image " << i - 1 << std::endl;
 			std::vector<cv::Mat> res_p = triangulate_matched_points(tmp, i, calib_data);
 
 			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
-			// std::cout << "Data after clean: \n" << without_outliers[0] << std::endl;
-			// std::cout << "\n" << without_outliers[1] << std::endl;
-			// std::cout << "ends of point" << std::endl;
+
+			this->tracked_points.push_back(std::make_pair(without_outliers[0], 
+														  without_outliers[1]));
+
+		#ifdef DEBUG_LOG_ENABLE
+			std::cout << "Data after clean: \n" << without_outliers[0] << std::endl;
+			std::cout << "\n" << without_outliers[1] << std::endl;
+			std::cout << "ends of point" << std::endl;
+		#endif
 
 			StatisticalProcessing st_p(without_outliers);
 			cv::Mat clear_d = st_p.prepare_data();
