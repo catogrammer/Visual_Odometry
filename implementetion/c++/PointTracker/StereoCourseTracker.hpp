@@ -6,7 +6,7 @@
 #include "CourseTracker.hpp"
 #include "StereoPointTracker.hpp"
 
-#include <opencv2/sfm/triangulation.hpp>
+#include "opencv2/sfm/triangulation.hpp"
 #include "opencv2/calib3d.hpp"
 #include "StatisticalProcessing.hpp"
 
@@ -15,25 +15,26 @@ class StereoCourseTracker : protected CourseTracker {
 private:
 
 public:
-	std::vector<std::pair<std::vector<KeyPoint>,
-						  std::vector<KeyPoint>
-						  >
-						  		> key_points;
+	std::vector<std::pair<std::vector<KeyPoint>, std::vector<KeyPoint>>> 
+		key_points;
 	std::vector<std::vector<DMatch>> good_matches;
 
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
 
-	void track_course(const size_t count_images,
-					  ImageReader reader, CalibReader calib_data);
-	std::vector<Mat> get_indexes();
-	std::vector<std::vector<cv::Point2f>> get_key_points_by_index(std::vector<cv::Mat> vec, size_t i);
+	void track_course(const size_t count_images, ImageReader reader, 
+		CalibReader calib_data);
+	std::vector<Mat> match_paired_points();
+	std::vector<std::vector<cv::Point2f>>
+		get_key_points_by_index(std::vector<cv::Mat> vec, size_t i);
 	void print_paired_keypoints(std::vector<Mat> vec, size_t i);
-	std::vector<cv::Mat> get_result_points(std::vector<Mat> indexes, size_t i,
-										   CalibReader calib_data);
+	std::vector<cv::Mat> triangulate_matched_points(std::vector<Mat> indexes,
+		size_t i, CalibReader calib_data);
 };
 
-void print_vector_dmatch(std::vector<std::vector<DMatch>> vec_dmatch) {
+void
+print_vector_dmatch(std::vector<std::vector<DMatch>> vec_dmatch)
+{
 	for(auto vec : vec_dmatch)
 	{
 		std::cout << "********" << std::endl;
@@ -45,7 +46,7 @@ void print_vector_dmatch(std::vector<std::vector<DMatch>> vec_dmatch) {
 }
 
 std::vector<Mat>
-StereoCourseTracker::get_indexes()
+StereoCourseTracker::match_paired_points()
 {
 	std::vector<Mat> result;
 
@@ -73,7 +74,7 @@ StereoCourseTracker::get_indexes()
 			it_cletf_cright_beg++;
 			it_cleft_nleft_beg++;
 		}
-		else if ( (*it_cletf_cright_beg).queryIdx < (*it_cleft_nleft_beg).queryIdx )
+		else if ((*it_cletf_cright_beg).queryIdx < (*it_cleft_nleft_beg).queryIdx )
 			it_cletf_cright_beg++;
 		else
 			it_cleft_nleft_beg++;
@@ -119,13 +120,14 @@ draw_matches(Mat img_1, std::vector<KeyPoint> kps_1,
 				good_matches, img_matches, Scalar::all(-1),
 				Scalar::all(-1), std::vector<char>(),
 				DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-	//-- Show detected matches
+	// Show detected matches
 	imshow("Good Matches", img_matches );
 	waitKey();
 }
 
 std::vector<std::vector<cv::Point2f>>
-StereoCourseTracker::get_key_points_by_index(std::vector<cv::Mat> vec, size_t i){
+StereoCourseTracker::get_key_points_by_index(std::vector<cv::Mat> vec, size_t i)
+{
 
 	std::vector<std::vector<cv::Point2f>> mtrx_of_kps(4);
 
@@ -154,7 +156,7 @@ void print_vec(std::vector<T> vec){
 }
 
 std::vector<cv::Mat>
-StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
+StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t i,
 									   CalibReader calib_data)
 {
 	std::vector<cv::Mat> real_world_points;
@@ -188,34 +190,34 @@ StereoCourseTracker::get_result_points(std::vector<Mat> indexes, size_t i,
 	real_world_points.push_back(curr_real_world_points);
 	real_world_points.push_back(next_real_world_points);
 
-	// std::cout << "DSLKFJL:"  << next_real_world_points << std::endl;
-
 	return real_world_points;
 }
 
-std::vector<cv::Mat> remove_outliers(std::vector<cv::Mat> points){
+std::vector<cv::Mat>
+remove_outliers(std::vector<cv::Mat> points)
+{
 	std::vector<cv::Mat> res(2);
 	cv:Mat3d points_1, points_2;
-	size_t eps = -17;
+	float eps = -10.0;
+
 	for (size_t i = 0; i < points[0].cols; i++){
 		if (points[0].at<double>(0, i) > eps &&
 			points[0].at<double>(1, i) > eps &&
 			points[0].at<double>(2, i) > eps &&
 			points[1].at<double>(0, i) > eps &&
 			points[1].at<double>(1, i) > eps &&
-			points[1].at<double>(2, i) > eps
-			)
+			points[1].at<double>(2, i) > eps)
 		{
 			res[0].push_back(points[0].col(i).t());
 			res[1].push_back(points[1].col(i).t());
 		}
 	}
+
 	return res;
 }
 
 void
-StereoCourseTracker::track_course(const size_t count_images,
-								  ImageReader reader,
+StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 								  CalibReader calib_data)
 {
 	Mat prev_img_left, prev_img_right;
@@ -262,24 +264,23 @@ StereoCourseTracker::track_course(const size_t count_images,
 
 		if (i > 0)
 		{
-			std::vector<Mat> tmp = get_indexes();
+			std::vector<Mat> tmp = match_paired_points();
 
 			// print_paired_keypoints(tmp, i);
 			std::cout << "resulted points for image " << i - 1 << std::endl;
-			std::vector<cv::Mat> res_p = get_result_points(tmp, i, calib_data);
-
-			std::cout << "Data befor clean: \n" << res_p[0].t() << std::endl;
+			std::vector<cv::Mat> res_p = triangulate_matched_points(tmp, i, calib_data);
 
 			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
-			std::cout << "Result data: \n" << without_outliers[0] << std::endl;
-			std::cout << "ends of point" << std::endl;
+			// std::cout << "Data after clean: \n" << without_outliers[0] << std::endl;
+			// std::cout << "\n" << without_outliers[1] << std::endl;
+			// std::cout << "ends of point" << std::endl;
 
-			// StatisticalProcessing st_p(without_outliers);
-			// cv::Mat clear_d = st_p.prepare_data();
+			StatisticalProcessing st_p(without_outliers);
+			cv::Mat clear_d = st_p.prepare_data();
 			
-			// /* Satistic data */
-			// if (!clear_d.empty())
-			// 	std::cout << "result data: \n" << clear_d.t() << std::endl;
+			/* Satistic data */
+			if (!clear_d.empty())
+				std::cout << "Points offset data: \n" << clear_d.t() << std::endl;
 
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}
