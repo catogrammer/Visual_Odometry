@@ -40,7 +40,8 @@ public:
 void
 MonoPointTracker::detect_features()
 {
-	Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(FastFeatureDetector::TYPE_9_16);
+	// Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(FastFeatureDetector::TYPE_9_16);
+	Ptr<FeatureDetector> detector = ORB::create();
 
 	detector->detect(image_1, keypoints_1);
 	detector->detect(image_2, keypoints_2);
@@ -69,23 +70,5 @@ MonoPointTracker::match_features()
 		}
 	}
 }
-
-// void
-// MonoPointTracker::get_matched_features()
-// {
-// 	// KeyPoints stroerd Point2f type
-// 	for (auto el : good_matches)
-// 	{
-// 		std::cout << keypoints_1[el.queryIdx].pt << " "
-// 				  << keypoints_2[el.trainIdx].pt << std::endl;
-// 	}
-// }
-
-// 
-// void
-// get_points_position()
-// {
-//
-// }
 
 #endif

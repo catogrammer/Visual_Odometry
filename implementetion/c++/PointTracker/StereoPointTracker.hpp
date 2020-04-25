@@ -3,7 +3,7 @@
 
 #include "PointTracker.hpp"
 
-#define RATIO_THRESH 0.75f
+#define RATIO_THRESH 0.67f
 
 // template <class Detector, class Descriptor, class Matcher>
 class StereoPointTracker : public PointTracker {
@@ -28,22 +28,17 @@ public:
 	void detect_features();
 	void match_features();
 	void get_good_matches();
-	// std::vector<Matx22f> get_good_coordinate();
-	// std::vector<Point3f> get_result_point_positions(Point3f l_cam_p,
-	// 												Point3f r_cam_p);
 	void get_matched_features();
-	static std::vector<DMatch> match__features(Mat image_1,
+	static std::vector<DMatch> match_with_second_pair(Mat image_1,
 											Mat image_2,
 											std::vector<KeyPoint> kps_1, 
 											std::vector<KeyPoint> kps_2);
-	// void print_indexies();
-	// void get_points_position();
 };
 
 // template <class Detector>
 void
 StereoPointTracker::detect_features(){
-	Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(FastFeatureDetector::TYPE_9_16);
+	Ptr<FeatureDetector> detector = ORB::create();
 
 	detector->detect(image_l, kps_l);
 	detector->detect(image_r, kps_r);
@@ -52,19 +47,25 @@ StereoPointTracker::detect_features(){
 // template <class Descriptor, Matcher>
 void
 StereoPointTracker::match_features(){
-	Ptr<DAISY> computer = DAISY::create(DAISY::NRM_NONE);
+	Ptr<FeatureDetector> computer = ORB::create();
 	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
 	computer->compute(image_l, kps_l, descriptors_l);
 	computer->compute(image_r, kps_r, descriptors_r);
-	
-	matcher->knnMatch(descriptors_l, descriptors_r, knn_matches, 2);
 
-	// std::cout << "size knn = "<< knn_matches.size() << std::endl;
+	if(descriptors_l.type()!=CV_32F) {
+    	descriptors_l.convertTo(descriptors_l, CV_32F);
+	}
+
+	if(descriptors_r.type()!=CV_32F) {
+		descriptors_r.convertTo(descriptors_r, CV_32F);
+	}
+
+	matcher->knnMatch(descriptors_l, descriptors_r, knn_matches, 2);
 }
 
 std::vector<DMatch>
-StereoPointTracker::match__features(Mat image_1,
+StereoPointTracker::match_with_second_pair(Mat image_1,
 									Mat image_2,
 									std::vector<KeyPoint> kps_1, 
 									std::vector<KeyPoint> kps_2)
@@ -72,12 +73,21 @@ StereoPointTracker::match__features(Mat image_1,
 	Mat descriptors_1, descriptors_2;
 	std::vector<std::vector<DMatch>> knn_matches_;
 	std::vector<DMatch>	good_matches_;
-	Ptr<DAISY> computer = DAISY::create(DAISY::NRM_NONE);
+
+	Ptr<FeatureDetector> computer = ORB::create();
 	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
 	computer->compute(image_1, kps_1, descriptors_1);
 	computer->compute(image_2, kps_2, descriptors_2);
-	
+
+	if(descriptors_1.type()!=CV_32F) {
+    	descriptors_1.convertTo(descriptors_1, CV_32F);
+	}
+
+	if(descriptors_2.type()!=CV_32F) {
+		descriptors_2.convertTo(descriptors_2, CV_32F);
+	}
+
 	matcher->knnMatch(descriptors_1, descriptors_2, knn_matches_, 2);
 
 	for (size_t i = 0; i < knn_matches_.size(); i++)
@@ -90,7 +100,6 @@ StereoPointTracker::match__features(Mat image_1,
 	}
 
 	return good_matches_;
-	// std::cout << "size knn = "<< knn_matches.size() << std::endl;
 }
 
 void
