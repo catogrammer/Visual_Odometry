@@ -38,8 +38,10 @@ ImageReader::read_pair_image(Mat& img_1, Mat& img_2, const size_t index_image)
 	std::string image_1_path = path + "image_02/" + "data/" + image_name;
 	std::string image_2_path = path + "image_03/" + "data/" + image_name;
 
+#ifdef DEBUG_LOG_ENABLE	
 	std::cout << "path = " << image_1_path << std::endl;
 	std::cout << "path = " << image_2_path << std::endl;
+#endif
 
 	img_1 = imread(image_1_path, IMREAD_GRAYSCALE);
 	img_2 = imread(image_2_path, IMREAD_GRAYSCALE);

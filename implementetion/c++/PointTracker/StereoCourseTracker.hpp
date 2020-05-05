@@ -10,7 +10,8 @@
 #include "opencv2/calib3d.hpp"
 #include "StatisticalProcessing.hpp"
 
-#define DEBUG_LOG_ENABLE
+// #define DEBUG_LOG_ENABLE
+// #define DEBUG_DRAW_ENABLE
 
 class StereoCourseTracker : protected CourseTracker {
 private:
@@ -20,6 +21,7 @@ public:
 		key_points;
 	std::vector<std::vector<DMatch>> good_matches;
 	std::vector<std::pair<cv::Mat, cv::Mat>> tracked_points;
+	std::vector<cv::Point3f> navigation_data = {cv::Point3f(0,0,0)};
 
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
@@ -236,9 +238,11 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		tracker.match_features();
 		tracker.get_good_matches();
 
-		// std::cout << "Curr image left right:" << std::endl;
-		// draw_matches(curr_img_left, tracker.kps_l, curr_img_right,
-		// 			 tracker.kps_r, tracker.good_matches);
+	#ifdef DEBUG_DRAW_ENABLE
+		std::cout << "Curr image left right:" << std::endl;
+		draw_matches(curr_img_left, tracker.kps_l, curr_img_right,
+					 tracker.kps_r, tracker.good_matches);
+	#endif
 
 		key_points.push_back(std::make_pair(tracker.kps_l,tracker.kps_r));
 
@@ -255,9 +259,13 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			// 									key_points[i-1].second,
 			// 									tracker.kps_r);
 			good_matches.push_back(pleft_cleft_match);
-			// std::cout << "Curr image left  next image left:" << std::endl;
-			// draw_matches(prev_img_left, key_points[i-1].first, curr_img_left,
-			// 				tracker.kps_l, pleft_cleft_match);
+
+		#ifdef DEBUG_DRAW_ENABLE
+			std::cout << "Curr image left  next image left:" << std::endl;
+			draw_matches(prev_img_left, key_points[i-1].first, curr_img_left,
+						 tracker.kps_l, pleft_cleft_match);
+		#endif
+
 		}
 		good_matches.push_back(tracker.good_matches);
 
@@ -272,13 +280,12 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 		#ifdef DEBUG_LOG_ENABLE
 			// print_paired_keypoints(tmp, i);
+			std::cout << "resulted points for image " << i - 1 << std::endl;
 		#endif
 		
-			std::cout << "resulted points for image " << i - 1 << std::endl;
 			std::vector<cv::Mat> res_p = triangulate_matched_points(tmp, i, calib_data);
-
+			
 			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
-
 			this->tracked_points.push_back(std::make_pair(without_outliers[0], 
 														  without_outliers[1]));
 
@@ -290,11 +297,14 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 			StatisticalProcessing st_p(without_outliers);
 			cv::Mat clear_d = st_p.prepare_data();
-			
+			navigation_data.push_back(cv::Point3f(st_p.mean[0], st_p.mean[1], st_p.mean[2]));
+
+		#ifdef DEBUG_LOG_ENABLE	
 			/* Satistic data */
 			if (!clear_d.empty())
-				std::cout << "Points offset data: \n" << clear_d.t() << std::endl;
-
+				std::cout << "Points offset data: \n" << clear_d << std::endl;
+		#endif
+		
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}
 

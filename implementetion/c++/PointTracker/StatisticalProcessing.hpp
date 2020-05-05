@@ -10,9 +10,10 @@ class StatisticalProcessing
 private:
     std::vector<cv::Mat> data;
     cv::Mat clear_data;
+public:
     cv::Scalar mean;
     cv::Scalar stddev;
-public:
+    
     StatisticalProcessing(std::vector<cv::Mat> d): data(d) {};
     ~StatisticalProcessing() {};
 
@@ -31,8 +32,10 @@ StatisticalProcessing::prepare_data(){
         this->stddev[i] = stddev_[0];
     }
 
+#ifdef DEBUG_LOG_ENABLE	
     std::cout << "mean : " << this->mean << std::endl
               << "stddev : " << this->stddev << std::endl;
+#endif
 
     // applay 3 sigma rule
     const int n_sigma = 3;
