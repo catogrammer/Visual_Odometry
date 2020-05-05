@@ -2,3 +2,4 @@ build
 venv
 calibr_data
 input_data
+.vscode
