@@ -76,9 +76,11 @@ VisualizeCloudPoint::generate_nav_path()
     cv::Point3f summed = nav_path[0];
     for (size_t i = 0; i < nav_path.size() - 1; i++)
     {
-        cv::viz::WLine line_widget(summed, summed+nav_path[i+1], cv::viz::Color::white());
+        cv::viz::WLine line_widget(summed, summed+nav_path[i+1],
+            cv::viz::Color::white());
     #ifdef DEBUG_LOG_ENABLE
-        std::cout << "Coords :\n" << summed << "-" << summed+nav_path[i+1] << ":" << nav_path[i] << std::endl;
+        std::cout << "Coords :\n" << summed << "-" << summed+nav_path[i+1] 
+        << ":" << nav_path[i] << std::endl << &line_widget << std::endl;
     #endif
         summed += nav_path[i+1];
 
@@ -90,11 +92,29 @@ VisualizeCloudPoint::generate_nav_path()
 void
 VisualizeCloudPoint::generate_cam_pose()
 {
-    cv::viz::WCameraPosition cam_1_pose(pair_intrinsic_m.first);
-    cv::viz::WCameraPosition cam_2_pose(pair_intrinsic_m.second);
+    cv::Point3f summed = nav_path[0];
+    cv::Matx33d f_intr_m = pair_intrinsic_m.first;
+    cv::Matx33d s_intr_m = pair_intrinsic_m.second;
 
-    this->myWindow.showWidget("Camera 1 position", cam_1_pose);
-    this->myWindow.showWidget("Camera 2 position", cam_2_pose);
+    for (size_t i = 0; i < nav_path.size(); i++)
+    {
+        cv::viz::WCameraPosition cam_wp(f_intr_m, 1, cv::viz::Color::white());
+
+        Vec3f cam_pos(summed), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(-1.0f,0.0f,0.0f);
+        // cam pose / direction view cam / dir by y/x/z
+        Affine3f cam_pose = viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
+        summed += nav_path[i+1];
+
+    #ifdef DEBUG_LOG_ENABLE
+        std::cout << "Size path : " << nav_path.size() << std::endl << "i = "
+        << i <<  std::endl << "Intrinsic matrix :\n" << f_intr_m 
+        << std::endl << cam_widget_1 << " " << cam_widget_1 << std::endl
+        << &cam_1_wp << std::endl;
+    #endif
+
+        std::string cam_widget = "Cam " + std::to_string(i) + " Widget";
+        this->myWindow.showWidget(cam_widget, cam_wp, cam_pose);
+    }
 }
 
 void
@@ -104,9 +124,9 @@ VisualizeCloudPoint::show()
     // this->myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem(1000.0));
     this->myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
 
-    generate_cloud_widgets();
-    generate_nav_path();
+    // generate_cloud_widgets();
     generate_cam_pose();
+    generate_nav_path();
 
     while(!this->myWindow.wasStopped())
     {

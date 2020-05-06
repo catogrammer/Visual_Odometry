@@ -1,63 +1,62 @@
-#include <opencv2/viz/vizcore.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/viz.hpp>
 #include <iostream>
-
+#include <fstream>
 using namespace cv;
 using namespace std;
-
-/**
- * @function main
- */
-int main()
+static void help()
 {
-    /// Create a window
-    viz::Viz3d myWindow("Coordinate Frame");
-
-    // Add coordinate axes
-    myWindow.showWidget("Coordinate Widget", viz::WCoordinateSystem());
-
-    float arr[] = {.1, .3, .1, .5, .3, .8, .6, .2, .9, .1};
-	Mat cloudMat(3, 2, CV_64FC4, arr);
-    // cloudMat << .1, .3, .1, .5, .3, .8, .6, .2, .9;
-	
-
-    /// Construct a cube widget
-    // viz::WCube cube_widget(Point3f(0.5,0.5,0.0), Point3f(0.0,0.0,-0.5), true, viz::Color::blue());
-    // cube_widget.setRenderingProperty(viz::LINE_WIDTH, 2.0);
-
-    // /// Display widget (update if already displayed)
-    // myWindow.showWidget("Cube Widget", cube_widget);
-
-    /// Rodrigues vector
-    Mat rot_vec = Mat::zeros(1,3,CV_32F);
-    float translation_phase = 0.0, translation = 0.0;
-    while(!myWindow.wasStopped())
+    cout
+    << "--------------------------------------------------------------------------"   << endl
+    << "This program shows how to use makeTransformToGlobal() to compute required pose,"
+    << "how to use makeCameraPose and Viz3d::setViewerPose. You can observe the scene "
+    << "from camera point of view (C) or global point of view (G)"                    << endl
+    << "Usage:"                                                                       << endl
+    << "./transformations [ G | C ]"                                                 << endl
+    << endl;
+}
+static Mat cvcloud_load()
+{
+    Mat cloud(1, 1889, CV_32FC3);
+    ifstream ifs("bunny.ply");
+    string str;
+    for(size_t i = 0; i < 12; ++i)
+        getline(ifs, str);
+    Point3f* data = cloud.ptr<cv::Point3f>();
+    float dummy1, dummy2;
+    for(size_t i = 0; i < 1889; ++i)
+        ifs >> data[i].x >> data[i].y >> data[i].z >> dummy1 >> dummy2;
+    cloud *= 5.0f;
+    return cloud;
+}
+int main(int argn, char **argv)
+{
+    help();
+    if (argn < 2)
     {
-        /* Rotation using rodrigues */
-        /// Rotate around (1,1,1)
-        rot_vec.at<float>(0,0) += CV_PI * 0.01f;
-        rot_vec.at<float>(0,1) += CV_PI * 0.01f;
-        rot_vec.at<float>(0,2) += CV_PI * 0.01f;
-
-        /// Shift on (1,1,1)
-        translation_phase += CV_PI * 0.01f;
-        translation = sin(translation_phase);
-
-        Mat rot_mat;
-        Rodrigues(rot_vec, rot_mat);
-
-        /// Construct pose
-        Affine3f pose(rot_mat, Vec3f(translation, translation, translation));
-
-
-        viz::WCloud cloud_widget(cloudMat, viz::Color::white());
-        cloud_widget.setRenderingProperty( viz::POINT_SIZE, 4 );
-        myWindow.showWidget("Cloud Widget", cloud_widget);
-        
-        // myWindow.setWidgetPose("Cube Widget", pose);
-
-        myWindow.spinOnce(1, true);
+        cout << "Missing arguments." << endl;
+        return 1;
     }
-
+    bool camera_pov = (argv[1][0] == 'C');
+    viz::Viz3d myWindow("Coordinate Frame");
+    myWindow.showWidget("Coordinate Widget", viz::WCoordinateSystem());
+    Vec3f cam_pos(-1.0f,-3.0f,0.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(1.0f,0.0f,0.0f);
+    // положение направьление камеры, напвление координат
+    Affine3f cam_pose = viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
+    Affine3f transform = viz::makeTransformToGlobal(Vec3f(0.0f,-1.0f,0.0f), Vec3f(-1.0f,0.0f,0.0f), Vec3f(0.0f,0.0f,-1.0f), cam_pos);
+    Mat bunny_cloud = cvcloud_load();
+    viz::WCloud cloud_widget(bunny_cloud, viz::Color::green());
+    Affine3f cloud_pose = Affine3f().translate(Vec3f(0.0f,0.0f,3.0f));
+    Affine3f cloud_pose_global = transform * cloud_pose;
+    if (!camera_pov)
+    {
+        viz::WCameraPosition cpw(0.5); // Coordinate axes
+        viz::WCameraPosition cpw_frustum(Vec2f(0.889484, 0.523599)); // Camera frustum
+        myWindow.showWidget("CPW", cpw, cam_pose);
+        myWindow.showWidget("CPW_FRUSTUM", cpw_frustum, cam_pose);
+    }
+    myWindow.showWidget("bunny", cloud_widget, cloud_pose_global);
+    if (camera_pov)
+        myWindow.setViewerPose(cam_pose);
+    myWindow.spin();
     return 0;
 }
