@@ -9,7 +9,7 @@
 #include "opencv2/viz/vizcore.hpp"
 #include <opencv2/core/softfloat.hpp>
 
-// #define DEBUG_LOG_ENABLE
+#define DEBUG_LOG_ENABLE
 
 class VisualizeCloudPoint
 {
@@ -29,6 +29,8 @@ public:
         nav_path(nav_p), pair_intrinsic_m(K_m_pair) {};
     
     ~VisualizeCloudPoint(){};
+
+    // void generate_truth_path(std::vector<cv::Point3f>,){};
 
     void show();
 };
@@ -89,6 +91,12 @@ VisualizeCloudPoint::generate_nav_path()
     }
 }
 
+// void
+// VisualizeCloudPoint::generate_truth_path()
+// {
+
+// }
+
 void
 VisualizeCloudPoint::generate_cam_pose()
 {
@@ -108,8 +116,7 @@ VisualizeCloudPoint::generate_cam_pose()
     #ifdef DEBUG_LOG_ENABLE
         std::cout << "Size path : " << nav_path.size() << std::endl << "i = "
         << i <<  std::endl << "Intrinsic matrix :\n" << f_intr_m 
-        << std::endl << cam_widget_1 << " " << cam_widget_1 << std::endl
-        << &cam_1_wp << std::endl;
+        << std::endl;
     #endif
 
         std::string cam_widget = "Cam " + std::to_string(i) + " Widget";
@@ -121,7 +128,6 @@ void
 VisualizeCloudPoint::show()
 {
     this->myWindow = cv::viz::Viz3d("Viz Demo");
-    // this->myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem(1000.0));
     this->myWindow.showWidget("Coordinate Widget", cv::viz::WCoordinateSystem());
 
     // generate_cloud_widgets();

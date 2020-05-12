@@ -7,8 +7,9 @@
 #include "PointTracker/ImageReader.hpp"
 #include "PointTracker/CalibReader.hpp"
 #include "PointTracker/VisualizeCloudPoint.hpp"
+#include "PointTracker/TruePathReader.hpp"
 
-#define LENGHT_IMAGE_NAME 10
+#define COUNT_IMAGES 8
 
 /** @function main */
 int main( int argc, char** argv )
@@ -16,7 +17,7 @@ int main( int argc, char** argv )
 	StereoCourseTracker tracker;
 
 	// std::string path_name = "/home/akuma/Visual_Odometry/implementetion/input_data/2011_09_26_drive_0048_sync/";
-	std::string path_name = "/home/akuma/Downloads/Kitti_datasets/2011_09_26_drive_0018_sync/";
+	std::string path_name = "/home/akuma/Downloads/Kitti_datasets/2011_09_26_drive_0048_sync/";
 	ImageReader reader(path_name);
 
 	CalibReader calib_data;
@@ -24,7 +25,7 @@ int main( int argc, char** argv )
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 
-	tracker.track_course(8, reader, calib_data);
+	tracker.track_course(COUNT_IMAGES, reader, calib_data);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
@@ -37,5 +38,16 @@ int main( int argc, char** argv )
 
 	VisualizeCloudPoint viz_module(tracker.tracked_points, tracker.navigation_data, K_m_pair);
 	viz_module.show();
+
+	// TruePathReader truth_p(path_name + "oxts/");
+	
+	// std::cout << truth_p.read_data(COUNT_IMAGES) << std::endl;
+	// truth_p.convertOxtsToPose();
+	// for (auto &&i : truth_p.poses)
+	// {
+	// 	std::cout << i << std::endl;
+	// }
+	
+
 	return 0;
 }
