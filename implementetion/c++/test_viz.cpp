@@ -39,8 +39,8 @@ int main(int argn, char **argv)
     bool camera_pov = (argv[1][0] == 'C');
     viz::Viz3d myWindow("Coordinate Frame");
     myWindow.showWidget("Coordinate Widget", viz::WCoordinateSystem());
-    Vec3f cam_pos(-1.0f,-3.0f,0.0f), cam_focal_point(0.0f,0.0f,0.0f), cam_y_dir(1.0f,0.0f,0.0f);
-    // положение направьление камеры, напвление координат
+    Vec3f cam_pos(-1.0f,-3.0f,0.0f), cam_focal_point(1.0f,1.0f,1.0f), cam_y_dir(-1.0f,0.0f,0.0f);
+    // положение / направление камеры, напвление координат
     Affine3f cam_pose = viz::makeCameraPose(cam_pos, cam_focal_point, cam_y_dir);
     Affine3f transform = viz::makeTransformToGlobal(Vec3f(0.0f,-1.0f,0.0f), Vec3f(-1.0f,0.0f,0.0f), Vec3f(0.0f,0.0f,-1.0f), cam_pos);
     Mat bunny_cloud = cvcloud_load();

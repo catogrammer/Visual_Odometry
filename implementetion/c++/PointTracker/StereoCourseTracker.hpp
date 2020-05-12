@@ -154,9 +154,9 @@ template<typename T>
 void print_vec(std::vector<T> vec){
     for (auto &&i : vec)
     {
-        std::cout << i << ' ';
+        std::cout << i << std::endl;
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
 }
 
 std::vector<cv::Mat>
@@ -284,7 +284,9 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		#endif
 		
 			std::vector<cv::Mat> res_p = triangulate_matched_points(tmp, i, calib_data);
-			
+
+			print_vec(res_p);
+// TODO
 			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
 			this->tracked_points.push_back(std::make_pair(without_outliers[0], 
 														  without_outliers[1]));
@@ -298,7 +300,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			StatisticalProcessing st_p(without_outliers);
 			cv::Mat clear_d = st_p.prepare_data();
 			navigation_data.push_back(cv::Point3f(st_p.mean[0], st_p.mean[1], st_p.mean[2]));
-
+// TODO
 		#ifdef DEBUG_LOG_ENABLE	
 			/* Satistic data */
 			if (!clear_d.empty())

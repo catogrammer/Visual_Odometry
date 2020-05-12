@@ -9,7 +9,7 @@
 #include "PointTracker/VisualizeCloudPoint.hpp"
 #include "PointTracker/TruePathReader.hpp"
 
-#define COUNT_IMAGES 8
+#define COUNT_IMAGES 7
 
 /** @function main */
 int main( int argc, char** argv )
@@ -31,23 +31,32 @@ int main( int argc, char** argv )
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
 	std::cout << "Work time: " << duration * 1e-6 << " sec" << std::endl;
 
+	TruePathReader truth_p(path_name + "oxts/");
+	if (!truth_p.read_data(COUNT_IMAGES))
+		std::cout << "True path wasn't load!" << std::endl;
+	truth_p.convertOxtsToPose();
+
 	cv::Mat K_m = cv::Mat(calib_data.calib_cam_data[0].K_xx(), true).reshape(1,3);
 	std::pair<cv::Mat,cv::Mat> K_m_pair = std::make_pair(
 		cv::Mat(calib_data.calib_cam_data[0].K_xx(), true).reshape(1,3),
 		cv::Mat(calib_data.calib_cam_data[1].K_xx(), true).reshape(1,3));
 
-	VisualizeCloudPoint viz_module(tracker.tracked_points, tracker.navigation_data, K_m_pair);
+	VisualizeCloudPoint viz_module(tracker.tracked_points);
+	viz_module.show_path(tracker.navigation_data, K_m_pair, cv::viz::Color::white(), true);
+	viz_module.show_path(truth_p.poses, K_m_pair, cv::viz::Color::green(), true);
 	viz_module.show();
 
-	// TruePathReader truth_p(path_name + "oxts/");
-	
-	// std::cout << truth_p.read_data(COUNT_IMAGES) << std::endl;
-	// truth_p.convertOxtsToPose();
-	// for (auto &&i : truth_p.poses)
-	// {
-	// 	std::cout << i << std::endl;
-	// }
-	
+	std::cout << "Truth path" << std::endl;
+	for (auto &&i : truth_p.poses)
+	{
+		std::cout << i << std::endl;
+	}
+
+	std::cout << "My path" << std::endl;
+	for (auto &&i : tracker.navigation_data)
+	{
+		std::cout << i << std::endl;
+	}
 
 	return 0;
 }

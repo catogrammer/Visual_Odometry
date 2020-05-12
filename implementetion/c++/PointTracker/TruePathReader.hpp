@@ -19,7 +19,7 @@ private:
     std::string path;
 public:
     std::vector<std::vector<double>> oxts;
-    std::vector<cv::Mat> poses;
+    std::vector<cv::Point3f> poses;
 
     TruePathReader(std::string path) : path(path) {};
     ~TruePathReader(){};
@@ -46,7 +46,7 @@ TruePathReader::read_data(const size_t& cnt_imgs)
     for (size_t i = 0; i < cnt_imgs; i++)
     {
         std::string full_path = path + "data/" + get_file_name(i);
-        std::cout << full_path << std::endl;
+        // std::cout << full_path << std::endl;
         std::ifstream in(full_path, std::ifstream::in);
 
         if (!in.is_open())
@@ -59,9 +59,7 @@ TruePathReader::read_data(const size_t& cnt_imgs)
         for(std::string s; ssin >> s; )
             oxt.push_back(std::stod(s));
         
-        oxts.push_back(oxt);
-        std::cout << oxts.size() << std::endl;
-        
+        oxts.push_back(oxt);        
         in.close();
     }
 
@@ -82,10 +80,8 @@ latlonToMercator(double lat, double lon, double scale)
 {
     cv::Vec2d merc;
     int er = 6378137;
-    // std::cout << "lat : " << lat << " lon: "  << lon << std::endl;
     double mx = scale * lon * CV_PI * er / 180;
     double my = scale * er * cv::log( std::tan((90+lat) * CV_PI / 360) );
-    // std::cout << "mx : " << mx << " my: " << my << std::endl;
     merc << mx, my;
     return merc;
 }
@@ -95,7 +91,7 @@ TruePathReader::convertOxtsToPose()
 {
 
     cv::softdouble scale = latToScale(oxts[0][0]);
-    std::cout << "scale : " << scale << std::endl;
+    // std::cout << "scale : " << scale << std::endl;
 
     cv::Vec3d t_prev(oxts[0][0], oxts[0][1] , oxts[0][3]);
     
@@ -128,6 +124,7 @@ TruePathReader::convertOxtsToPose()
             cv::cos(rz), 0, 0, 0, 1);
 
         R  = Rz * Ry * Rx;
+
     #ifdef DEBUG_LOG_ENABLE
         std::cout << "R : \n" << R << std::endl;
         std::cout << "t : " << t << std::endl;
@@ -139,9 +136,9 @@ TruePathReader::convertOxtsToPose()
             hconcat(R, t, Tr_0);
             vconcat(Tr_0, zero_1, Tr_0);
         }
-        pose = (R*(t_prev - t)).t();
+        pose = (R*(t_prev - t)).t() * 100;
         t_prev = t;
-        poses.push_back(pose);
+        poses.push_back(cv::Point3f(pose));
 
     #ifdef DEBUG_LOG_ENABLE
         std::cout << "Pose : " << pose << std::endl;
