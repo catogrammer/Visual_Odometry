@@ -5,6 +5,7 @@
 
 #include "CourseTracker.hpp"
 #include "StereoPointTracker.hpp"
+#include "Transformation.hpp"
 
 #include "opencv2/sfm/triangulation.hpp"
 #include "opencv2/calib3d.hpp"
@@ -34,6 +35,9 @@ public:
 	void print_paired_keypoints(std::vector<Mat> vec, size_t i);
 	std::vector<cv::Mat> triangulate_matched_points(std::vector<Mat> indexes,
 		size_t i, CalibReader calib_data);
+	cv::Mat diff_between_points(std::vector<cv::Mat> c_and_p_points);
+
+	cv::Point3f get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev);
 };
 
 void
@@ -197,35 +201,104 @@ StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t
 	return real_world_points;
 }
 
-std::vector<cv::Mat>
-remove_outliers(std::vector<cv::Mat> points)
+cv::Mat
+StereoCourseTracker::diff_between_points(std::vector<cv::Mat> c_and_p_points)
 {
-	std::vector<cv::Mat> res(2);
-	cv:Mat3d points_1, points_2;
-	float eps = -7.0;
+	return c_and_p_points[1] - c_and_p_points[0];
+}
 
-	for (size_t i = 0; i < points[0].cols; i++){
-		if (points[0].at<double>(0, i) > eps &&
-			points[0].at<double>(1, i) > eps &&
-			points[0].at<double>(2, i) > eps &&
-			points[1].at<double>(0, i) > eps &&
-			points[1].at<double>(1, i) > eps &&
-			points[1].at<double>(2, i) > eps)
+// cv::Mat
+// remove_outliers_n_sigma(cv::Mat points, cv::Scalar sigma)
+// {
+// 	cv::Mat res;
+// 	std::cout << "sigma = " << sigma << std::endl;
+
+// 	for (size_t i = 0; i < points.rows; i++)
+// 	{
+		
+// 		if (points.at<double>(i, 0) > -sigma[0] &&
+// 			points.at<double>(i, 1) > -sigma[1] &&
+// 			points.at<double>(i, 2) > -sigma[2] &&
+// 			points.at<double>(i, 0) < sigma[0] &&
+// 			points.at<double>(i, 1) < sigma[1] &&
+// 			points.at<double>(i, 2) < sigma[2])
+// 		{
+// 			res.push_back(points.row(i));
+// 		}
+// 	}
+// 	return res;
+// }
+
+bool
+check_by_eps(cv::Mat p, const float eps)
+{
+	if (p.at<double>(0, 0) < eps &&
+		p.at<double>(1, 0) < eps &&
+		p.at<double>(2, 0) < eps &&
+		p.at<double>(0, 0) > -eps &&
+		p.at<double>(1, 0) > -eps &&
+		p.at<double>(2, 0) > -eps
+	)
+		return true;
+}
+
+std::vector<cv::Mat>
+remove_outliers_by_eps(std::vector<cv::Mat> points, const float eps = 5.0)
+{
+	size_t sz = points.size();
+	std::vector<cv::Mat> res(sz);
+
+
+	for (size_t i = 0; i < points[0].cols; i++)
+	{
+		if (check_by_eps(points[0].col(i), eps) &&
+			check_by_eps(points[1].col(i), eps))
 		{
+			// std::cout << "col = " << points.col(i) << std::endl;
 			res[0].push_back(points[0].col(i).t());
 			res[1].push_back(points[1].col(i).t());
 		}
 	}
 
+	res[0] = res[0].t();
+	res[1] = res[1].t();
+
 	return res;
+}
+
+cv::Point3f
+StereoCourseTracker::get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
+{
+	Transformation transf_m;
+	cv::Mat R, t;
+
+	cv::Mat Rt_mat = transf_m.get_Rt(triang_p);
+	cv::Mat pose = t_prev;
+	
+	if (!Rt_mat.empty())
+	{
+		R = cv::Mat(Rt_mat, Rect(0,0,3,3));
+		t = cv::Mat(Rt_mat, Rect(3,0,1,3)).t();
+	}
+
+	if (!R.empty())
+	{
+		pose = (R*(t_prev - t).t());
+		t_prev = t;
+	}
+
+	return cv::Point3f(pose);
 }
 
 void
 StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 								  CalibReader calib_data)
 {
-	Mat prev_img_left, prev_img_right;
-	std::vector<DMatch> prev_l_r_match;
+	cv::Mat prev_img_left, prev_img_right;
+
+	cv::Mat t_prev = (cv::Mat_<float>(1,3)<< 0, 0, 0);
+	t_prev.convertTo(t_prev, CV_64F);
+	navigation_data.push_back(cv::Point3f(t_prev));
 
 	for (size_t i = 0; i < count_images; i++)
 	{
@@ -276,37 +349,56 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 		if (i > 0)
 		{
-			std::vector<Mat> tmp = match_paired_points();
+			std::vector<Mat> matched_p = match_paired_points();
+
+			std::cout << "Count of mathed points :" << matched_p.size() << std::endl;
+			std::cout << "Count of math cur left-right :" << good_matches[0].size() << std::endl;
+			std::cout << "Count of math cur left next left :" << good_matches[1].size() << std::endl;
+			std::cout << "Count of math next left-right :" << good_matches[2].size() << std::endl;
+
 
 		#ifdef DEBUG_LOG_ENABLE
-			// print_paired_keypoints(tmp, i);
+			// print_paired_keypoints(matched_p, i);
 			std::cout << "resulted points for image " << i - 1 << std::endl;
 		#endif
 		
-			std::vector<cv::Mat> res_p = triangulate_matched_points(tmp, i, calib_data);
+			std::vector<cv::Mat> triang_p = triangulate_matched_points(matched_p, i, calib_data);
+			//clear data
+			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 15);
 
-			print_vec(res_p);
-// TODO
-			std::vector<cv::Mat> without_outliers = remove_outliers(res_p);
-			this->tracked_points.push_back(std::make_pair(without_outliers[0], 
-														  without_outliers[1]));
+			std::cout << "Cleared size for image: " << i << std::endl;
+			std::cout << cleared_data[0].size() << " "
+			<< cleared_data[1].size() << std::endl;
+			std::cout << "Cleared size for image: " << i << std::endl;
 
-		#ifdef DEBUG_LOG_ENABLE
-			std::cout << "Data after clean: \n" << without_outliers[0] << std::endl;
-			std::cout << "\n" << without_outliers[1] << std::endl;
-			std::cout << "ends of point" << std::endl;
-		#endif
+			// get pose
+			cv::Point3f pose = get_pose(cleared_data, t_prev);
 
-			StatisticalProcessing st_p(without_outliers);
-			cv::Mat clear_d = st_p.prepare_data();
-			navigation_data.push_back(cv::Point3f(st_p.mean[0], st_p.mean[1], st_p.mean[2]));
-// TODO
-		#ifdef DEBUG_LOG_ENABLE	
-			/* Satistic data */
-			if (!clear_d.empty())
-				std::cout << "Points offset data: \n" << clear_d << std::endl;
-		#endif
-		
+			// float arr[][] = {{1., 4., 5.},{2., 3., 1.},{4., 1., 3.},{0., 3., 3.}};
+			// cv::Mat test_m(3, 4, CV_64F, &arr);
+			// cv::Mat test_m2 = 
+
+			// std::cout << "TEST" << std::endl;
+			// cv::Mat distance = diff_between_points(triang_p);
+
+			// remove outliers by 3 sigma rule
+			// cv::Mat filtered_by_value = remove_outliers_by_eps(distance, 2.0);
+			// StatisticalProcessing st_p(filtered_by_value);
+			// st_p.prepare_data();
+			// cv::Mat filtered_by_sigma = remove_outliers_n_sigma(filtered_by_value, 3*st_p.stddev);
+
+			// std::cout << "Distance beg: " << i << std::endl;
+			// std::cout << distance << std::endl;
+			// std::cout << "Distance end: " << i << std::endl;
+
+			// std::cout << "Cleared distance beg: " << i << std::endl;
+			// std::cout << filtered_by_value << std::endl;
+			// std::cout << "Cleared distance end: " << i << std::endl;
+			
+			// cv::Scalar mean_f = st_p.prepare_data(filtered_by_sigma);
+			// std::cout << "mean v : " << mean_f << std::endl;
+			
+			navigation_data.push_back(pose);
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);
 		}
 

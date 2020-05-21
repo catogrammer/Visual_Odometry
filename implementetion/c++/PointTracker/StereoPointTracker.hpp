@@ -3,7 +3,7 @@
 
 #include "PointTracker.hpp"
 
-#define RATIO_THRESH 0.73f
+#define RATIO_THRESH 0.64f
 
 // template <class Detector, class Descriptor, class Matcher>
 class StereoPointTracker : public PointTracker {

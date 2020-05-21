@@ -9,14 +9,14 @@
 #include "PointTracker/VisualizeCloudPoint.hpp"
 #include "PointTracker/TruePathReader.hpp"
 
-#define COUNT_IMAGES 7
+#define COUNT_IMAGES 10
 
 /** @function main */
 int main( int argc, char** argv )
 {
 	StereoCourseTracker tracker;
 
-	// std::string path_name = "/home/akuma/Visual_Odometry/implementetion/input_data/2011_09_26_drive_0048_sync/";
+	// std::string path_name = "/home/akuma/Downloads/Kitti_datasets/2011_09_26_drive_0018_sync/";
 	std::string path_name = "/home/akuma/Downloads/Kitti_datasets/2011_09_26_drive_0048_sync/";
 	ImageReader reader(path_name);
 

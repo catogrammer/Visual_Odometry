@@ -111,11 +111,7 @@ VisualizeCloudPoint::show_path(std::vector<cv::Point3f> path,
         this->myWindow.showWidget(name_l_widget, line_widget);
 
     #ifdef DEBUG_LOG_ENABLE
-        std::cout << "Size path : " << nav_path.size() << "\nNav_path[0] : " 
-        << nav_path[0] 
-        // << std::endl << "i = "
-        // << i <<  std::endl << "Intrinsic matrix :\n" << f_intr_m 
-        << std::endl;
+        // std::cout << "Size path : " << std::endl;
     #endif
 
     }
