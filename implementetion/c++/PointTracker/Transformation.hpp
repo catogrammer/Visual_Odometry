@@ -28,10 +28,11 @@ Transformation::get_Rt(std::vector<cv::Mat> curr_next_p)
 
     if (cnt_curr_p > 0 && cnt_next_p > 0)
     {
+        // std::cout << "Types "<< curr_next_p[0].type() << "=?" << ones.type() << std::endl;
         cv::vconcat(curr_next_p[0], ones, X1);
         cv::vconcat(curr_next_p[1], ones, X2);
     }
-
+    
     if (cnt_curr_p >= 4 and cnt_next_p >=4)
         transform = X2 * X1.t() * (X1*X1.t()).inv();
 

@@ -95,7 +95,7 @@ VisualizeCloudPoint::show_path(std::vector<cv::Point3f> path,
 
         if (show_cam)
         {
-            cv::viz::WCameraPosition cam_wp(f_intr_m, 1, color);
+            cv::viz::WCameraPosition cam_wp(f_intr_m, 0.7, color);
             Vec3f cam_pos(summed);                  // cam pose
             Vec3f cam_focal_point(0.0f,0.0f,0.0f);  // direction view cam
             Vec3f cam_y_dir(1.0f,0.0f,0.0f);       // dir by y/x/z

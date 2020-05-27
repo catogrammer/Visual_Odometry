@@ -2,10 +2,13 @@
 #define STEREOCOURSETRACKER_HPP
 
 #include <utility>
+#include <random>
+#include <cmath>
 
 #include "CourseTracker.hpp"
 #include "StereoPointTracker.hpp"
 #include "Transformation.hpp"
+#include "TruePathReader.hpp"
 
 #include "opencv2/sfm/triangulation.hpp"
 #include "opencv2/calib3d.hpp"
@@ -36,8 +39,10 @@ public:
 	std::vector<cv::Mat> triangulate_matched_points(std::vector<Mat> indexes,
 		size_t i, CalibReader calib_data);
 	cv::Mat diff_between_points(std::vector<cv::Mat> c_and_p_points);
-
 	cv::Point3f get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev);
+	cv::Point3f min_sq(std::vector<cv::Mat> triang_p, cv::Mat &t_prev);
+
+	void test(TruePathReader truth_p);
 };
 
 void
@@ -109,6 +114,7 @@ StereoCourseTracker::print_paired_keypoints(std::vector<Mat> vec, size_t i)
 {
 	for (auto el : vec)
 	{
+		std::cout << "..................." << std::endl;
 		std::cout << key_points[i - 1].first[el.at<int>(0,0)].pt << " "
 				  << key_points[i - 1].second[el.at<int>(0,1)].pt << std::endl;
 		std::cout << key_points[i].first[el.at<int>(1,0)].pt << " "
@@ -163,13 +169,27 @@ void print_vec(std::vector<T> vec){
     // std::cout << std::endl;
 }
 
+cv::Mat
+homogenues_to_xyz(cv::Mat points)
+{
+	cv::Mat xyz = cv::Mat(points, cv::Rect(0,0,points.cols,3));
+    cv::Mat scale = cv::Mat(points, cv::Rect(0,3,points.cols,1));
+    cv::Mat a, b;
+
+    cv::vconcat(scale, scale, a);
+    cv::vconcat(a, scale, b);
+    // std::cout << "tmp p :" << std::endl << b << std::endl;
+
+	return xyz/b;
+}
+
 std::vector<cv::Mat>
 StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t i,
 									   CalibReader calib_data)
 {
 	std::vector<cv::Mat> real_world_points;
-	cv::Mat curr_real_world_points;
-	cv::Mat next_real_world_points;
+	cv::Mat trng_cur_rw_p;
+	cv::Mat trng_nxt_rw_p;
 	std::vector<cv::Mat> input_curr_p(2);
 	std::vector<cv::Mat> input_next_p(2);
 
@@ -192,11 +212,21 @@ StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t
 	cv::Mat proj_m_r_cam = cv::Mat(calib_data.calib_cam_data[1].P_rect_xx(), true).reshape(1,3);
 	std::vector<cv::Mat> proj_m{proj_m_l_cam, proj_m_r_cam};
 
-	cv::sfm::triangulatePoints(input_curr_p, proj_m, curr_real_world_points);
-	cv::sfm::triangulatePoints(input_next_p, proj_m, next_real_world_points);
+	cv::triangulatePoints(proj_m_l_cam, proj_m_r_cam, input_curr_p[0], input_curr_p[1], trng_cur_rw_p);
+	cv::triangulatePoints(proj_m_l_cam, proj_m_r_cam, input_next_p[0], input_next_p[1], trng_nxt_rw_p);
 
-	real_world_points.push_back(curr_real_world_points);
-	real_world_points.push_back(next_real_world_points);
+	// convert from homogenues coords to x, y, z
+	cv::Mat curr_real_xyz, next_real_xyz;
+	curr_real_xyz = homogenues_to_xyz(trng_cur_rw_p);
+	next_real_xyz = homogenues_to_xyz(trng_nxt_rw_p);
+	curr_real_xyz.convertTo(curr_real_xyz, CV_64F);
+	next_real_xyz.convertTo(next_real_xyz, CV_64F);
+
+	// cv::sfm::triangulatePoints(input_curr_p, proj_m, trng_cur_rw_p);
+	// cv::sfm::triangulatePoints(input_next_p, proj_m, trng_nxt_rw_p);
+
+	real_world_points.push_back(curr_real_xyz);
+	real_world_points.push_back(next_real_xyz);
 
 	return real_world_points;
 }
@@ -206,28 +236,6 @@ StereoCourseTracker::diff_between_points(std::vector<cv::Mat> c_and_p_points)
 {
 	return c_and_p_points[1] - c_and_p_points[0];
 }
-
-// cv::Mat
-// remove_outliers_n_sigma(cv::Mat points, cv::Scalar sigma)
-// {
-// 	cv::Mat res;
-// 	std::cout << "sigma = " << sigma << std::endl;
-
-// 	for (size_t i = 0; i < points.rows; i++)
-// 	{
-		
-// 		if (points.at<double>(i, 0) > -sigma[0] &&
-// 			points.at<double>(i, 1) > -sigma[1] &&
-// 			points.at<double>(i, 2) > -sigma[2] &&
-// 			points.at<double>(i, 0) < sigma[0] &&
-// 			points.at<double>(i, 1) < sigma[1] &&
-// 			points.at<double>(i, 2) < sigma[2])
-// 		{
-// 			res.push_back(points.row(i));
-// 		}
-// 	}
-// 	return res;
-// }
 
 bool
 check_by_eps(cv::Mat p, const float eps)
@@ -281,6 +289,9 @@ StereoCourseTracker::get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
 		t = cv::Mat(Rt_mat, Rect(3,0,1,3)).t();
 	}
 
+    std::cout << "R: \n" << R << std::endl;
+    std::cout << "t: \n" << t << std::endl;
+
 	if (!R.empty())
 	{
 		pose = (R*(t_prev - t).t());
@@ -288,6 +299,31 @@ StereoCourseTracker::get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
 	}
 
 	return cv::Point3f(pose);
+}
+
+cv::Point3f
+StereoCourseTracker::min_sq(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
+{
+
+	cv::Mat pose;
+
+	return cv::Point3f(pose);
+}
+
+void
+StereoCourseTracker::test(TruePathReader truth_p)
+{
+	navigation_data.clear(); 
+	size_t k = 0;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(0, 0.1);
+	for (auto &&el : truth_p.poses)
+	{
+		cv::Point3f ofs = cv::Point3f(dis(gen), dis(gen), std::pow(k,-1)*0.001);
+		if (k != 0) navigation_data.push_back(el+ofs);
+		k++;
+	}
 }
 
 void
@@ -298,7 +334,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 	cv::Mat t_prev = (cv::Mat_<float>(1,3)<< 0, 0, 0);
 	t_prev.convertTo(t_prev, CV_64F);
-	navigation_data.push_back(cv::Point3f(t_prev));
+	// navigation_data.push_back(cv::Point3f(t_prev));
 
 	for (size_t i = 0; i < count_images; i++)
 	{
@@ -312,7 +348,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		tracker.get_good_matches();
 
 	#ifdef DEBUG_DRAW_ENABLE
-		std::cout << "Curr image left right:" << std::endl;
+		std::cout << "Image left right for pair :" << i << std::endl;
 		draw_matches(curr_img_left, tracker.kps_l, curr_img_right,
 					 tracker.kps_r, tracker.good_matches);
 	#endif
@@ -334,7 +370,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			good_matches.push_back(pleft_cleft_match);
 
 		#ifdef DEBUG_DRAW_ENABLE
-			std::cout << "Curr image left  next image left:" << std::endl;
+			std::cout << "Match curr image left - next image left:" << std::endl;
 			draw_matches(prev_img_left, key_points[i-1].first, curr_img_left,
 						 tracker.kps_l, pleft_cleft_match);
 		#endif
@@ -342,58 +378,46 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		}
 		good_matches.push_back(tracker.good_matches);
 
-	#ifdef DEBUG_LOG_ENABLE
-		std::cout << "size good match = " << good_matches.size() << std::endl;
-		std::cout << "size key_points = " << key_points.size() << std::endl;
-	#endif
-
 		if (i > 0)
 		{
 			std::vector<Mat> matched_p = match_paired_points();
 
+			
+		#ifdef DEBUG_LOG_ENABLE
 			std::cout << "Count of mathed points :" << matched_p.size() << std::endl;
+			std::cout << "resulted points for image " << i - 1 << std::endl;
+			print_paired_keypoints(matched_p, i);
+			std::cout << "resulted points for image " << i - 1 << std::endl;
+
 			std::cout << "Count of math cur left-right :" << good_matches[0].size() << std::endl;
 			std::cout << "Count of math cur left next left :" << good_matches[1].size() << std::endl;
 			std::cout << "Count of math next left-right :" << good_matches[2].size() << std::endl;
-
-
-		#ifdef DEBUG_LOG_ENABLE
-			// print_paired_keypoints(matched_p, i);
-			std::cout << "resulted points for image " << i - 1 << std::endl;
+			std::cout << "size good match = " << good_matches.size() << std::endl;
+			std::cout << "size key_points = " << key_points.size() << std::endl;
 		#endif
 		
 			std::vector<cv::Mat> triang_p = triangulate_matched_points(matched_p, i, calib_data);
-			//clear data
-			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 15);
 
-			std::cout << "Cleared size for image: " << i << std::endl;
-			std::cout << cleared_data[0].size() << " "
-			<< cleared_data[1].size() << std::endl;
-			std::cout << "Cleared size for image: " << i << std::endl;
+			// std::cout << "Beg tr p" << std::endl;
+			// std::cout << triang_p[0] << std::endl;
+			// std::cout << "End tr p" << std::endl;
+
+			//clear data
+			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 20);
 
 			// get pose
-			cv::Point3f pose = get_pose(cleared_data, t_prev);
-
-			// float arr[][] = {{1., 4., 5.},{2., 3., 1.},{4., 1., 3.},{0., 3., 3.}};
-			// cv::Mat test_m(3, 4, CV_64F, &arr);
-			// cv::Mat test_m2 = 
-
-			// std::cout << "TEST" << std::endl;
-			// cv::Mat distance = diff_between_points(triang_p);
+			std::cout << "For " << i << " " << cleared_data[0].size() << std::endl;
+			for(size_t i = 0; i < cleared_data[0].cols; i++){
+				std::cout << "x1 :" << cleared_data[0].col(i).t() << " "
+						  << "x2 :" << cleared_data[1].col(i).t() << std::endl;
+			}
+			cv::Point3f pose = get_pose(triang_p, t_prev);
 
 			// remove outliers by 3 sigma rule
 			// cv::Mat filtered_by_value = remove_outliers_by_eps(distance, 2.0);
 			// StatisticalProcessing st_p(filtered_by_value);
 			// st_p.prepare_data();
 			// cv::Mat filtered_by_sigma = remove_outliers_n_sigma(filtered_by_value, 3*st_p.stddev);
-
-			// std::cout << "Distance beg: " << i << std::endl;
-			// std::cout << distance << std::endl;
-			// std::cout << "Distance end: " << i << std::endl;
-
-			// std::cout << "Cleared distance beg: " << i << std::endl;
-			// std::cout << filtered_by_value << std::endl;
-			// std::cout << "Cleared distance end: " << i << std::endl;
 			
 			// cv::Scalar mean_f = st_p.prepare_data(filtered_by_sigma);
 			// std::cout << "mean v : " << mean_f << std::endl;

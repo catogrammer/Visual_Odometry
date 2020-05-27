@@ -35,6 +35,7 @@ int main( int argc, char** argv )
 	if (!truth_p.read_data(COUNT_IMAGES))
 		std::cout << "True path wasn't load!" << std::endl;
 	truth_p.convertOxtsToPose();
+	// tracker.test(truth_p);
 
 	cv::Mat K_m = cv::Mat(calib_data.calib_cam_data[0].K_xx(), true).reshape(1,3);
 	std::pair<cv::Mat,cv::Mat> K_m_pair = std::make_pair(

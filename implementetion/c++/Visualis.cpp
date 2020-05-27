@@ -1,43 +1,90 @@
-#include <opencv2/viz/vizcore.hpp>
 #include <iostream>
+#include "opencv2/core.hpp"
+#ifdef HAVE_OPENCV_XFEATURES2D
+#include "opencv2/highgui.hpp"
+#include "opencv2/features2d.hpp"
+#include "opencv2/xfeatures2d.hpp"
 
+using namespace cv;
+using namespace cv::xfeatures2d;
+using std::cout;
+using std::endl;
 
-
-int main()
+void
+get_matched_features(std::vector<DMatch> good_matches,
+					 std::vector<KeyPoint> kps_l,
+					 std::vector<KeyPoint> kps_r)
 {
-    // Create a window
-    cv::viz::Viz3d myWindow("Viz Demo");
-
-	// Add coordinate axes
-    myWindow.showWidget("Coordinate", cv::viz::WCoordinateSystem());
-
-	// Add cloud widget
-
-	size_t n = 9;
-	float *arr = new float[n];
-	for (int i=0; i<n; i++) {
-		arr[i] = (i+1.0)/10;
+	// KeyPoints stroerd Point2f type
+	for (auto el : good_matches)
+	{
+		std::cout << kps_l[el.queryIdx].pt << " "
+				  << kps_r[el.trainIdx].pt << std::endl;
 	}
-	cv::Mat cloudMat = cv::Mat(1, 3, CV_32FC3, arr);
-	std::cout << cloudMat << std::endl;
-	cv::viz::WCloud cloud_widget(cloudMat, cv::viz::Color::white());
-	cloud_widget.setRenderingProperty( cv::viz::POINT_SIZE, 4 );
-	myWindow.showWidget("Cloud", cloud_widget);
+}
 
-	// /// Construct a cube widget
-    // cv::viz::WCube cube_widget(cv::Point3f(0.5,0.5,0.0),
-	// 						   cv::Point3f(0.0,0.0,-0.5),
-	// 						   true, cv::viz::Color::blue());
-    // cube_widget.setRenderingProperty(cv::viz::LINE_WIDTH, 4.0);
-	// myWindow.showWidget("Cube", cube_widget);
+const char* keys =
+    "{ help h |                    | Print help message. }"
+    "{ input1 | /home/akuma/1l.png | Path to input image 1. }"
+    "{ input2 | /home/akuma/1r.png | Path to input image 2. }";
 
-    while(!myWindow.wasStopped())
+int main( int argc, char* argv[] )
+{
+    CommandLineParser parser( argc, argv, keys );
+    Mat img1 = imread( samples::findFile( parser.get<String>("input1") ), IMREAD_GRAYSCALE );
+    Mat img2 = imread( samples::findFile( parser.get<String>("input2") ), IMREAD_GRAYSCALE );
+    if ( img1.empty() || img2.empty() )
     {
-		// cv::viz::WCloud cloud_widget(cloudMat, cv::viz::Color::white());
-		// cloud_widget.setRenderingProperty( cv::viz::POINT_SIZE, 4 );
-		// myWindow.showWidget("Cloud", cloud_widget);
-        // Event loop for 1 millisecond
-        myWindow.spinOnce(33, true);
+        cout << "Could not open or find the image!\n" << endl;
+        parser.printMessage();
+        return -1;
     }
+    //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
+    int minHessian = 400;
+    Ptr<FeatureDetector> detector = ORB::create(minHessian);
+    std::vector<KeyPoint> keypoints1, keypoints2;
+    Mat descriptors1, descriptors2;
+    detector->detectAndCompute( img1, noArray(), keypoints1, descriptors1 );
+    detector->detectAndCompute( img2, noArray(), keypoints2, descriptors2 );
+
+	if(descriptors1.type()!= CV_32F) {
+    	descriptors1.convertTo(descriptors1, CV_32F);
+	}
+
+	if(descriptors2.type()!= CV_32F) {
+		descriptors2.convertTo(descriptors2, CV_32F);
+	}
+
+    //-- Step 2: Matching descriptor vectors with a FLANN based matcher
+    // Since SURF is a floating-point descriptor NORM_L2 is used
+    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+    std::vector< std::vector<DMatch> > knn_matches;
+    matcher->knnMatch( descriptors1, descriptors2, knn_matches, 2 );
+    //-- Filter matches using the Lowe's ratio test
+    const float ratio_thresh = 0.7f;
+    std::vector<DMatch> good_matches;
+    for (size_t i = 0; i < knn_matches.size(); i++)
+    {
+        if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance)
+        {
+            good_matches.push_back(knn_matches[i][0]);
+        }
+    }
+    //-- Draw matches
+    Mat img_matches;
+    drawMatches( img1, keypoints1, img2, keypoints2, good_matches, img_matches, Scalar::all(-1),
+                 Scalar::all(-1), std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+    //-- Show detected matches
+    imshow("Good Matches", img_matches );
+    waitKey();
+	get_matched_features(good_matches, keypoints1, keypoints2);
     return 0;
 }
+#else
+int main()
+{
+    std::cout << "This tutorial code needs the xfeatures2d contrib module to be run." << std::endl;
+    return 0;
+}
+
+#endif
