@@ -9,6 +9,7 @@
 #include "StereoPointTracker.hpp"
 #include "Transformation.hpp"
 #include "TruePathReader.hpp"
+#include "MSQ.hpp"
 
 #include "opencv2/sfm/triangulation.hpp"
 #include "opencv2/calib3d.hpp"
@@ -198,6 +199,9 @@ StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t
 	for (size_t i = 0; i < 2; i++){
 		for (size_t j = 0; j < 2; j++){
 			std::vector<cv::Point2f> tmp_ps = kps_by_index[i*2 + j];
+			if (tmp_ps.empty()){
+				return real_world_points;
+			}
 			cv::Mat ps = cv::Mat(tmp_ps).reshape(1,2);
 			if (i == 0)
 				input_curr_p[j].push_back(ps);
@@ -222,11 +226,13 @@ StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t
 	curr_real_xyz.convertTo(curr_real_xyz, CV_64F);
 	next_real_xyz.convertTo(next_real_xyz, CV_64F);
 
-	// cv::sfm::triangulatePoints(input_curr_p, proj_m, trng_cur_rw_p);
-	// cv::sfm::triangulatePoints(input_next_p, proj_m, trng_nxt_rw_p);
-
 	real_world_points.push_back(curr_real_xyz);
 	real_world_points.push_back(next_real_xyz);
+
+	// cv::sfm::triangulatePoints(input_curr_p, proj_m, trng_cur_rw_p);
+	// cv::sfm::triangulatePoints(input_next_p, proj_m, trng_nxt_rw_p);
+	// real_world_points.push_back(trng_cur_rw_p);
+	// real_world_points.push_back(trng_nxt_rw_p);
 
 	return real_world_points;
 }
@@ -285,12 +291,12 @@ StereoCourseTracker::get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
 	
 	if (!Rt_mat.empty())
 	{
-		R = cv::Mat(Rt_mat, Rect(0,0,3,3));
-		t = cv::Mat(Rt_mat, Rect(3,0,1,3)).t();
+		R = cv::Mat(Rt_mat, cv::Rect(0,0,3,3));
+		t = cv::Mat(Rt_mat, cv::Rect(3,0,1,3)).t();
 	}
 
-    std::cout << "R: \n" << R << std::endl;
-    std::cout << "t: \n" << t << std::endl;
+    // std::cout << "R: \n" << R << std::endl;
+    // std::cout << "t: \n" << t << std::endl;
 
 	if (!R.empty())
 	{
@@ -301,29 +307,127 @@ StereoCourseTracker::get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
 	return cv::Point3f(pose);
 }
 
-cv::Point3f
-StereoCourseTracker::min_sq(std::vector<cv::Mat> triang_p, cv::Mat &t_prev)
-{
-
-	cv::Mat pose;
-
-	return cv::Point3f(pose);
-}
-
 void
 StereoCourseTracker::test(TruePathReader truth_p)
 {
 	navigation_data.clear(); 
+	navigation_data.push_back(cv::Point3f(0,0,0));
 	size_t k = 0;
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(0, 0.1);
+	std::uniform_real_distribution<> dis(0, 0.2);
+	float coef = truth_p.poses.size()/2;
 	for (auto &&el : truth_p.poses)
 	{
 		cv::Point3f ofs = cv::Point3f(dis(gen), dis(gen), std::pow(k,-1)*0.001);
-		if (k != 0) navigation_data.push_back(el+ofs);
+		if (k != 0)
+			if (k < coef)
+				navigation_data.push_back(el+ofs+ofs*(5/(coef*2)));
+			else
+				navigation_data.push_back(el+ofs-ofs*(5/(coef*2)));
 		k++;
 	}
+}
+
+cv::Vec3d
+CalculateMean(const cv::Mat_<cv::Vec3d> &points)
+{
+    cv::Mat_<cv::Vec3d> result;
+    cv::reduce(points, result, 0, cv::REDUCE_AVG);
+    return result(0, 0);
+}
+
+cv::Mat_<double>
+FindRigidTransform(const cv::Mat_<cv::Vec3d> &points1, const cv::Mat_<cv::Vec3d> points2)
+{
+    /* Calculate centroids. */
+    cv::Vec3d t1 = -CalculateMean(points1);
+    cv::Vec3d t2 = -CalculateMean(points2);
+
+    cv::Mat_<double> T1 = cv::Mat_<double>::eye(4, 4);
+    T1(0, 3) = t1[0];
+    T1(1, 3) = t1[1];
+    T1(2, 3) = t1[2];
+
+    cv::Mat_<double> T2 = cv::Mat_<double>::eye(4, 4);
+    T2(0, 3) = -t2[0];
+    T2(1, 3) = -t2[1];
+    T2(2, 3) = -t2[2];
+
+    /* Calculate covariance matrix for input points. Also calculate RMS deviation from centroid
+     * which is used for scale calculation.
+     */
+    cv::Mat_<double> C(3, 3, 0.0);
+    double p1Rms = 0, p2Rms = 0;
+    for (int ptIdx = 0; ptIdx < points1.rows; ptIdx++) {
+        cv::Vec3d p1 = points1(ptIdx, 0) + t1;
+        cv::Vec3d p2 = points2(ptIdx, 0) + t2;
+        p1Rms += p1.dot(p1);
+        p2Rms += p2.dot(p2);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                C(i, j) += p2[i] * p1[j];
+            }
+        }
+    }
+
+    cv::Mat_<double> u, s, vh;
+    cv::SVD::compute(C, s, u, vh);
+
+    cv::Mat_<double> R = u * vh;
+
+    if (cv::determinant(R) < 0) {
+        R -= u.col(2) * (vh.row(2) * 2.0);
+    }
+
+    double scale = sqrt(p2Rms / p1Rms);
+    R *= scale;
+
+    cv::Mat_<double> M = cv::Mat_<double>::eye(4, 4);
+    R.copyTo(M.colRange(0, 3).rowRange(0, 3));
+
+    cv::Mat_<double> result = T2 * M * T1;
+    result /= result(3, 3);
+
+    return result.rowRange(0, 3);
+}
+
+cv::Mat
+convet_mat_to_mat_vec(cv::Mat in)
+{
+    cv::Mat_<cv::Vec3d> out;
+    for (size_t i = 0; i < in.cols; i++)
+    {
+        out.push_back(cv::Vec3d(in.col(i)));
+    }
+
+    return out;
+}
+
+cv::Point3f
+get_pose_from_r(cv::Mat Rt_mat, cv::Mat &p_prev)
+{
+    cv::Mat pose = p_prev;
+    p_prev.convertTo(p_prev, CV_64F);
+	cv::Mat R, t;
+
+	if (!Rt_mat.empty())
+	{
+		R = cv::Mat(Rt_mat, cv::Rect(0,0,3,3));
+		t = cv::Mat(Rt_mat, cv::Rect(3,0,1,3)).t();
+	}
+
+    // std::cout << "R: \n" << R << std::endl;
+    // std::cout << "t: \n" << t << std::endl;
+
+	if (!R.empty())
+	{
+		pose = (R*(p_prev - t).t());
+		p_prev = pose.t();
+	}
+	// std::cout << "Pose " << pose << std::endl;
+
+	return cv::Point3f(pose);
 }
 
 void
@@ -332,10 +436,10 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 {
 	cv::Mat prev_img_left, prev_img_right;
 
-	cv::Mat t_prev = (cv::Mat_<float>(1,3)<< 0, 0, 0);
-	t_prev.convertTo(t_prev, CV_64F);
-	// navigation_data.push_back(cv::Point3f(t_prev));
-
+	cv::Mat p_prev = (cv::Mat_<float>(1,3)<< 0, 0, 0);
+	p_prev.convertTo(p_prev, CV_64F);
+	// navigation_data.push_back(cv::Point3f(p_prev));
+	cv::Point3f pose;
 	for (size_t i = 0; i < count_images; i++)
 	{
 		Mat curr_img_left, curr_img_right;
@@ -395,23 +499,28 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			std::cout << "size good match = " << good_matches.size() << std::endl;
 			std::cout << "size key_points = " << key_points.size() << std::endl;
 		#endif
-		
+			
 			std::vector<cv::Mat> triang_p = triangulate_matched_points(matched_p, i, calib_data);
+			if (!triang_p.empty()){
+				//clear data
+			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 50);
 
-			// std::cout << "Beg tr p" << std::endl;
-			// std::cout << triang_p[0] << std::endl;
-			// std::cout << "End tr p" << std::endl;
-
-			//clear data
-			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 20);
-
-			// get pose
+			/*
 			std::cout << "For " << i << " " << cleared_data[0].size() << std::endl;
 			for(size_t i = 0; i < cleared_data[0].cols; i++){
 				std::cout << "x1 :" << cleared_data[0].col(i).t() << " "
 						  << "x2 :" << cleared_data[1].col(i).t() << std::endl;
 			}
-			cv::Point3f pose = get_pose(triang_p, t_prev);
+			*/
+			// cv::Point3f pose = get_pose(triang_p, p_prev);
+
+			// MSQ min_sq(cleared_data);
+			// cv::Point3f pose = min_sq.get_pose(p_prev);
+			cv::Mat p1, p2;
+			p1 = convet_mat_to_mat_vec(cleared_data[0]);
+   			p2 = convet_mat_to_mat_vec(cleared_data[1]);
+			cv::Mat Rt = FindRigidTransform(p1, p2);
+			pose = get_pose_from_r(Rt, p_prev);
 
 			// remove outliers by 3 sigma rule
 			// cv::Mat filtered_by_value = remove_outliers_by_eps(distance, 2.0);
@@ -421,6 +530,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			
 			// cv::Scalar mean_f = st_p.prepare_data(filtered_by_sigma);
 			// std::cout << "mean v : " << mean_f << std::endl;
+			}
 			
 			navigation_data.push_back(pose);
 			good_matches.erase(good_matches.begin(), good_matches.begin()+2);

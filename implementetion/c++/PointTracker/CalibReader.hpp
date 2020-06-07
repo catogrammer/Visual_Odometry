@@ -84,7 +84,7 @@ void calc_matches(std::vector<std::string> &vect_matches,
     std::smatch m;
     std::regex_search(in, m, std::regex(re));
     if(m.empty()) {
-        std::cout << "NO MATCH\n";
+        // std::cout << "NO MATCH\n";
     } else {
         vect_matches.push_back(m[3]);
         calc_matches(vect_matches, m.suffix(),re);

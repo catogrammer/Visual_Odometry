@@ -12,7 +12,7 @@ class MSQ
 private:
     std::vector <cv::Mat> c_n_pnts;
 public:
-    MSQ(std::vector <cv::Mat> p, cv::Mat pr_t): c_n_pnts(p){};
+    MSQ(std::vector <cv::Mat> p): c_n_pnts(p){};
     ~MSQ(){};
 
     cv::Mat centr_mass(cv::Mat points);
@@ -62,7 +62,7 @@ get_R_by_quat(cv::Mat quart)
     float c = quart.at<float>(0,2);
     float d = quart.at<float>(0,3);
 
-    std::cout << "abcd is : " << a << " " << b << " " << c << " " << d << std::endl;
+    // std::cout << "abcd is : " << a << " " << b << " " << c << " " << d << std::endl;
 
     float tmp_r[3][3] = {{(a*a+b*b-c*c-d*d),
                           2*(b*c-a*d),
@@ -109,17 +109,20 @@ get_R_by_quat(cv::Mat quart)
 cv::Point3f
 MSQ::get_pose(cv::Mat &prev_t)
 {   
-    // prev_t.convertTo(prev_t, CV_32F);
+    prev_t.convertTo(prev_t, CV_32F);
     cv::Mat pose = prev_t;
     cv::Mat mu_p = centr_mass(c_n_pnts[0]);
     cv::Mat mu_x = centr_mass(c_n_pnts[1]);
     cv::Mat cc_m = cross_cov_mat(mu_p, mu_x);
     
+    
     cv::Mat tr_px = cv::Mat(1,1,CV_32F,cv::trace(cc_m)[0]);
     cv::Mat delta_mat = cc_m - cc_m.t();
 
+    std::cout << "Centers mass:\n"
+              << "mu_p : " << mu_p << std::endl
+              << "mu_x : " <<  mu_x << std::endl;
     std::cout << "Delta mat :\n" << delta_mat << std::endl;
-    std::cout << "Centers mass" << mu_p << " " <<  mu_x << std::endl;
 
     float delta[3] = {delta_mat.at<float>(1,2),
                       delta_mat.at<float>(2,0),
@@ -147,9 +150,8 @@ MSQ::get_pose(cv::Mat &prev_t)
 
     // cv::Mat E = find_quaternion();
     cv::Mat R_ = get_R_by_quat(E);
-    std::cout << "R res:\n" << R_ << std::endl;
-    std::cout << "mu :\n" << mu_x.type() << " " << mu_p << std::endl;
-    std::cout << "res : " << (R_*mu_p.t()).t() << std::endl;
+    std::cout << "R :\n" << R_ << std::endl;
+    // std::cout << "mu :\n" << mu_x.type() << " " << mu_p << std::endl;
     cv::Mat t_ = mu_x - (R_*mu_p.t()).t();
 
     // cv::Ptr<cv::MinProblemSolver::Function> min_f;

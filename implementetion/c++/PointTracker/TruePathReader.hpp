@@ -92,10 +92,10 @@ TruePathReader::convertOxtsToPose()
     cv::softdouble scale = latToScale(oxts[0][0]);
     // std::cout << "scale : " << scale << std::endl;
 
-    cv::Vec3d t_prev;
+    cv::Mat t_prev(1,3, CV_64F, cv::Scalar(0, 0, 0));
     poses.push_back(cv::Point3f(0.f, 0.f, 0.f));
     
-    cv::Mat Tr_0;
+    cv::Mat Tr_0_inv;
     cv::Mat zero_1 = (Mat_<double>(1, 4) << 0, 0, 0, 1);
 
     for (size_t i = 0; i < oxts.size(); i++)
@@ -106,9 +106,9 @@ TruePathReader::convertOxtsToPose()
             continue;
 
         // translation vector
-        cv::Vec3d t;
+
         cv::Vec2d tmp = latlonToMercator(oxts[i][0], oxts[i][1], scale);
-        t << tmp[0], tmp[1] , oxts[i][3];
+        cv::Mat t = (Mat_<double>(1,3) << tmp[0], tmp[1], oxts[i][3]);
         // t << oxts[i][0], oxts[i][1] , oxts[i][3];
 
         // rotation matrix (OXTS RT3000 user manual, page 71/92)
@@ -131,16 +131,23 @@ TruePathReader::convertOxtsToPose()
     #endif
 
         // normalize translation and rotation (start at 0/0/0)
-        // if (Tr_0.empty())
+        // if (Tr_0_inv.empty())
         // {
-        //     hconcat(R, t, Tr_0);
-        //     vconcat(Tr_0, zero_1, Tr_0);
+        //     cv::Mat tmp;
+        //     hconcat(R, t.t(), tmp);
+        //     vconcat(tmp, zero_1, Tr_0_inv);
+        //     Tr_0_inv = Tr_0_inv.inv();
         // }
+        // std::cout << "Tr_inv =  \n" << Tr_0_inv << std::endl;
+
         if (i > 0){
-            pose = (R*(t_prev - t)).t();
+            pose = (R*(t_prev - t).t())/1000000;
+            // std::cout << "Pose : " << pose << std::endl;
             poses.push_back(cv::Point3f(pose));
-        } 
-        t_prev = t;
+            t_prev = pose.t();
+        }
+        
+        
         
 
     #ifdef DEBUG_LOG_ENABLE
