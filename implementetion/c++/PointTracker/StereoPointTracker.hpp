@@ -3,8 +3,7 @@
 
 #include "PointTracker.hpp"
 
-#define RATIO_THRESH 0.67f
-#define NFEATURES 1700
+#define RATIO_THRESH 0.69f
 
 // template <class Detector, class Descriptor, class Matcher>
 class StereoPointTracker : public PointTracker {
@@ -19,12 +18,14 @@ public:
 
 	Mat descriptors_l, descriptors_r;
 	Mat image_l, image_r;
+	size_t cnt_features;
 
 	StereoPointTracker(Mat image_l,
-					   Mat image_r)
+					   Mat image_r, const size_t cnt_features)
 		:	PointTracker(),
 			image_l(image_l),
-			image_r(image_r){}
+			image_r(image_r),
+			cnt_features(cnt_features) {}
 
 	void detect_features();
 	void match_features();
@@ -39,7 +40,7 @@ public:
 // template <class Detector>
 void
 StereoPointTracker::detect_features(){
-	Ptr<FeatureDetector> detector = ORB::create(NFEATURES);
+	Ptr<FeatureDetector> detector = ORB::create(cnt_features);
 
 	detector->detect(image_l, kps_l);
 	detector->detect(image_r, kps_r);
@@ -48,7 +49,7 @@ StereoPointTracker::detect_features(){
 // template <class Descriptor, Matcher>
 void
 StereoPointTracker::match_features(){
-	Ptr<FeatureDetector> computer = ORB::create();
+	Ptr<FeatureDetector> computer = ORB::create(cnt_features);
 	Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
 	computer->compute(image_l, kps_l, descriptors_l);

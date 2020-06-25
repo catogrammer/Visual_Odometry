@@ -7,7 +7,7 @@
 
 // using namespace cv;
 
-#define LENGHT_IMAGE_NAME 10
+#define LENGHT_IMAGE_NAME 6
 
 class ImageReader {
 private:
@@ -35,8 +35,8 @@ void
 ImageReader::read_pair_image(cv::Mat& img_1, cv::Mat& img_2, const size_t index_image)
 {
 	std::string image_name = get_image_name(index_image);
-	std::string image_1_path = path + "image_02/" + "data/" + image_name;
-	std::string image_2_path = path + "image_03/" + "data/" + image_name;
+	std::string image_1_path = path + "image_0/" + image_name;
+	std::string image_2_path = path + "image_1/" + image_name;
 
 #ifdef DEBUG_LOG_ENABLE	
 	std::cout << "path = " << image_1_path << std::endl;

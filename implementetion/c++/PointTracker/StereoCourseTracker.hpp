@@ -10,10 +10,12 @@
 #include "Transformation.hpp"
 #include "TruePathReader.hpp"
 #include "MSQ.hpp"
+#include "StatisticalProcessing.hpp"
 
 #include "opencv2/sfm/triangulation.hpp"
 #include "opencv2/calib3d.hpp"
-#include "StatisticalProcessing.hpp"
+#include "opencv2/imgproc.hpp"
+
 
 // #define DEBUG_LOG_ENABLE
 // #define DEBUG_DRAW_ENABLE
@@ -31,14 +33,14 @@ public:
 	StereoCourseTracker() : CourseTracker(){}
 	~StereoCourseTracker(){}
 
-	void track_course(const size_t count_images, ImageReader reader, 
-		CalibReader calib_data);
+	void track_course(const size_t count_images, const size_t cnt_features,
+		ImageReader reader, SimpleCalibReader calib_data);
 	std::vector<Mat> match_paired_points();
 	std::vector<std::vector<cv::Point2f>>
 		get_key_points_by_index(std::vector<cv::Mat> vec, size_t i);
 	void print_paired_keypoints(std::vector<Mat> vec, size_t i);
 	std::vector<cv::Mat> triangulate_matched_points(std::vector<Mat> indexes,
-		size_t i, CalibReader calib_data);
+		size_t i, SimpleCalibReader calib_data);
 	cv::Mat diff_between_points(std::vector<cv::Mat> c_and_p_points);
 	cv::Point3f get_pose(std::vector<cv::Mat> triang_p, cv::Mat &t_prev);
 	cv::Point3f min_sq(std::vector<cv::Mat> triang_p, cv::Mat &t_prev);
@@ -127,17 +129,30 @@ StereoCourseTracker::print_paired_keypoints(std::vector<Mat> vec, size_t i)
 void
 draw_matches(Mat img_1, std::vector<KeyPoint> kps_1,
 			 Mat img_2, std::vector<KeyPoint> kps_2,
-			 std::vector<DMatch> good_matches)
+			 std::vector<DMatch> good_matches, std::string id)
 {
 	Mat img_matches;
+	static int i_cnt = 0;
 	drawMatches(img_1, kps_1, 
 				img_2, kps_2, 
 				good_matches, img_matches, Scalar::all(-1),
 				Scalar::all(-1), std::vector<char>(),
 				DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+	
+	int width = img_matches.cols * 60 / 100;
+	int height = img_matches.rows;
+	cv::resize(img_matches, img_matches, cv::Size(width, height), 0,0, cv::INTER_LINEAR);
+	
+	int font = cv::FONT_HERSHEY_SIMPLEX;
+    cv::putText(img_matches, id, cv::Point(10,10), font, .5,(255,255,255),2,cv::LINE_AA);
+	std::string t, name = std::to_string(i_cnt);
+	for (int i = 0; i < 5 - name.length(); i++)
+		t += "0";
+	cv::imwrite("/home/akuma/test_imgs_vo/img_" + t + name + ".jpg", img_matches);
+	i_cnt++;
 	// Show detected matches
-	imshow("Good Matches", img_matches );
-	waitKey();
+	// imshow("Good Matches", img_matches );
+	// waitKey();
 }
 
 std::vector<std::vector<cv::Point2f>>
@@ -186,7 +201,7 @@ homogenues_to_xyz(cv::Mat points)
 
 std::vector<cv::Mat>
 StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t i,
-									   CalibReader calib_data)
+									   SimpleCalibReader calib_data)
 {
 	std::vector<cv::Mat> real_world_points;
 	cv::Mat trng_cur_rw_p;
@@ -212,8 +227,8 @@ StereoCourseTracker::triangulate_matched_points(std::vector<Mat> indexes, size_t
 	// undistortPoints(c_n_left_p, new_c_n_left_p, left_cam_mtrx, dist);
 	// undistortPoints(c_n_right_p, new_c_n_right_p, right_cam_mtrx, dist);
 
-	cv::Mat proj_m_l_cam = cv::Mat(calib_data.calib_cam_data[0].P_rect_xx(), true).reshape(1,3);
-	cv::Mat proj_m_r_cam = cv::Mat(calib_data.calib_cam_data[1].P_rect_xx(), true).reshape(1,3);
+	cv::Mat proj_m_l_cam = cv::Mat(calib_data.calib_cam_data[0].P_xx(), true).reshape(1,3);
+	cv::Mat proj_m_r_cam = cv::Mat(calib_data.calib_cam_data[1].P_xx(), true).reshape(1,3);
 	std::vector<cv::Mat> proj_m{proj_m_l_cam, proj_m_r_cam};
 
 	cv::triangulatePoints(proj_m_l_cam, proj_m_r_cam, input_curr_p[0], input_curr_p[1], trng_cur_rw_p);
@@ -262,20 +277,21 @@ remove_outliers_by_eps(std::vector<cv::Mat> points, const float eps = 5.0)
 	size_t sz = points.size();
 	std::vector<cv::Mat> res(sz);
 
-
 	for (size_t i = 0; i < points[0].cols; i++)
 	{
 		if (check_by_eps(points[0].col(i), eps) &&
 			check_by_eps(points[1].col(i), eps))
 		{
-			// std::cout << "col = " << points.col(i) << std::endl;
 			res[0].push_back(points[0].col(i).t());
 			res[1].push_back(points[1].col(i).t());
 		}
 	}
 
-	res[0] = res[0].t();
-	res[1] = res[1].t();
+	if (!res[0].empty())
+	{
+		res[0] = res[0].t();
+		res[1] = res[1].t();
+	}
 
 	return res;
 }
@@ -315,7 +331,7 @@ StereoCourseTracker::test(TruePathReader truth_p)
 	size_t k = 0;
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(0, 0.2);
+	std::uniform_real_distribution<> dis(0, 0.4);
 	float coef = truth_p.poses.size()/2;
 	for (auto &&el : truth_p.poses)
 	{
@@ -431,8 +447,9 @@ get_pose_from_r(cv::Mat Rt_mat, cv::Mat &p_prev)
 }
 
 void
-StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
-								  CalibReader calib_data)
+StereoCourseTracker::track_course(const size_t count_images,
+						const size_t cnt_features, ImageReader reader,
+						SimpleCalibReader calib_data)
 {
 	cv::Mat prev_img_left, prev_img_right;
 
@@ -445,7 +462,7 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 		Mat curr_img_left, curr_img_right;
 
 		reader.read_pair_image(curr_img_left, curr_img_right, i);
-		StereoPointTracker tracker(curr_img_left, curr_img_right);
+		StereoPointTracker tracker(curr_img_left, curr_img_right, cnt_features);
 
 		tracker.detect_features();
 		tracker.match_features();
@@ -453,8 +470,14 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 	#ifdef DEBUG_DRAW_ENABLE
 		std::cout << "Image left right for pair :" << i << std::endl;
+		std::string str;
+		if (i%2 == 0)
+			str = "curr left-right";
+		else
+			str = "next left-right";
+
 		draw_matches(curr_img_left, tracker.kps_l, curr_img_right,
-					 tracker.kps_r, tracker.good_matches);
+					 tracker.kps_r, tracker.good_matches, str);
 	#endif
 
 		key_points.push_back(std::make_pair(tracker.kps_l,tracker.kps_r));
@@ -475,8 +498,9 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 
 		#ifdef DEBUG_DRAW_ENABLE
 			std::cout << "Match curr image left - next image left:" << std::endl;
+			std::string str = "cerr left-next_left";
 			draw_matches(prev_img_left, key_points[i-1].first, curr_img_left,
-						 tracker.kps_l, pleft_cleft_match);
+						 tracker.kps_l, pleft_cleft_match, str);
 		#endif
 
 		}
@@ -503,33 +527,18 @@ StereoCourseTracker::track_course(const size_t count_images, ImageReader reader,
 			std::vector<cv::Mat> triang_p = triangulate_matched_points(matched_p, i, calib_data);
 			if (!triang_p.empty()){
 				//clear data
-			std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 50);
+				// std::cout << "tr size 0: " << triang_p[0].size() << " 1: " << triang_p[1].size() << std::endl;
+				std::vector<cv::Mat> cleared_data = remove_outliers_by_eps(triang_p, 50);
+				// std::cout << "cl size 0: " << cleared_data[0].size() << " 1: " << cleared_data[1].size() << std::endl;
 
-			/*
-			std::cout << "For " << i << " " << cleared_data[0].size() << std::endl;
-			for(size_t i = 0; i < cleared_data[0].cols; i++){
-				std::cout << "x1 :" << cleared_data[0].col(i).t() << " "
-						  << "x2 :" << cleared_data[1].col(i).t() << std::endl;
-			}
-			*/
-			// cv::Point3f pose = get_pose(triang_p, p_prev);
-
-			// MSQ min_sq(cleared_data);
-			// cv::Point3f pose = min_sq.get_pose(p_prev);
-			cv::Mat p1, p2;
-			p1 = convet_mat_to_mat_vec(cleared_data[0]);
-   			p2 = convet_mat_to_mat_vec(cleared_data[1]);
-			cv::Mat Rt = FindRigidTransform(p1, p2);
-			pose = get_pose_from_r(Rt, p_prev);
-
-			// remove outliers by 3 sigma rule
-			// cv::Mat filtered_by_value = remove_outliers_by_eps(distance, 2.0);
-			// StatisticalProcessing st_p(filtered_by_value);
-			// st_p.prepare_data();
-			// cv::Mat filtered_by_sigma = remove_outliers_n_sigma(filtered_by_value, 3*st_p.stddev);
-			
-			// cv::Scalar mean_f = st_p.prepare_data(filtered_by_sigma);
-			// std::cout << "mean v : " << mean_f << std::endl;
+				if (!cleared_data[0].empty())
+				{
+					cv::Mat p1, p2;
+					p1 = convet_mat_to_mat_vec(cleared_data[0]);
+					p2 = convet_mat_to_mat_vec(cleared_data[1]);
+					cv::Mat Rt = FindRigidTransform(p1, p2);
+					pose = get_pose_from_r(Rt, p_prev);
+				}
 			}
 			
 			navigation_data.push_back(pose);
